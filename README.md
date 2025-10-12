@@ -57,6 +57,15 @@
         #app-indicator.success { background-color: #10B981; } /* Green */
         #app-indicator.info { background-color: #3B82F6; } /* Blue */
         #app-indicator.warning { background-color: #EF4444; } /* Red */
+
+        /* Added for the settings toggle styling */
+        .toggle-checkbox:checked { right: 0; border-color: #4f46e5; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #4f46e5; }
+        .toggle-label { cursor: pointer; text-indent: -9999px; width: 40px; height: 24px; background: #9ca3af; display: block; border-radius: 100px; position: relative; }
+        .toggle-checkbox { opacity: 0; width: 0; height: 0; }
+        .toggle-checkbox:checked ~ .toggle-label:before { transform: translateX(16px); }
+        .toggle-label:before { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 90px; transition: 0.3s; box-shadow: 0 0 1px 0 rgba(10, 10, 10, 0.29); }
+
     </style>
 </head>
 <body class="antialiased">
@@ -68,17 +77,15 @@
         <span id="indicator-text">Saving...</span>
     </div>
 
-    <!-- Modals -->
-    <div id="add-task-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Add New Task</h3><form id="add-task-form" class="space-y-4"><div class="relative"><input type="text" id="add-task-text" placeholder="What do you need to do?" class="w-full bg-gray-100 rounded-lg pl-4 pr-12 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><button type="button" id="generate-subtasks-btn" title="✨ Generate Subtasks with AI" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-9l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L12.707 10l-1.414 1.414a1 1 0 01-1.414 0L7.586 9.121a1 1 0 010-1.414L8.293 7a1 1 0 011.414 0L12 9.293l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L13.414 12l1.414 1.414a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414 0L12 13.414l-2.293 2.293a1 1 0 01-1.414 0l-.707-.707a1 1 0 010-1.414L10.586 12 9.172 10.586a1 1 0 010-1.414l.707-.707a1 1 0 011.414 0L12 8.586z" /></svg></button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="add-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="add-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low Priority</option><option value="medium" selected>Medium Priority</option><option value="high">High Priority</option></select><select id="add-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option><option value="Work">Work</option><option value="School">School</option><option value="Other">Other</option></select></div><div><label for="add-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="add-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-repeat" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><div><label for="add-task-reminder" class="block mb-1 text-sm font-medium text-gray-600">Reminder</label><select id="add-task-reminder" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">No reminder</option><option value="5">5 minutes before</option><option value="15">15 minutes before</option><option value="60">1 hour before</option></select><div id="add-email-toggle-container" class="hidden mt-2 pl-2"><label class="flex items-center space-x-2"><input type="checkbox" id="add-task-email-toggle" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="text-sm text-gray-600">Also send an email reminder?</span></label></div></div></div><div id="generated-subtasks-container" class="hidden space-y-2 pt-2 max-h-32 overflow-y-auto"><h4 class="text-sm font-bold text-gray-600">✨ AI Generated Subtasks:</h4><ul id="generated-subtasks-list" class="space-y-1 text-sm text-gray-700"></ul></div><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-add-task-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Add Task</button></div></form></div></div>
-    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></form></div></div>
+    <div id="add-task-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Add New Task</h3><form id="add-task-form" class="space-y-4"><div class="relative"><input type="text" id="add-task-text" placeholder="What do you need to do?" class="w-full bg-gray-100 rounded-lg pl-4 pr-12 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><button type="button" id="generate-subtasks-btn" title="✨ Generate Subtasks with AI" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-9l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L12.707 10l-1.414 1.414a1 1 0 01-1.414 0L7.586 9.121a1 1 0 010-1.414L8.293 7a1 1 0 011.414 0L12 9.293l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L13.414 12l1.414 1.414a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414 0L12 13.414l-2.293 2.293a1 1 0 01-1.414 0l-.707-.707a1 1 0 010-1.414L10.586 12 9.172 10.586a1 1 0 010-1.414l.707-.707a1 1 0 011.414 0L12 8.586z" /></svg></button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="add-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="add-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select type="text" id="add-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low Priority</option><option value="medium" selected>Medium Priority</option><option value="high">High Priority</option></select><select type="text" id="add-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option><option value="Work">Work</option><option value="School">School</option><option value="Other">Other</option></select></div><div><label for="add-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="add-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select type="text" id="add-task-repeat" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><div><label for="add-task-reminder" class="block mb-1 text-sm font-medium text-gray-600">Reminder</label><select type="text" id="add-task-reminder" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">No reminder</option><option value="5">5 minutes before</option><option value="15">15 minutes before</option><option value="60">1 hour before</option></select><div id="add-email-toggle-container" class="hidden mt-2 pl-2"><label class="flex items-center space-x-2"><input type="checkbox" id="add-task-email-toggle" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="text-sm text-gray-600">Also send an email reminder?</span></label></div></div></div><div id="generated-subtasks-container" class="hidden space-y-2 pt-2 max-h-32 overflow-y-auto"><h4 class="text-sm font-bold text-gray-600">✨ AI Generated Subtasks:</h4><ul id="generated-subtasks-list" class="space-y-1 text-sm text-gray-700"></ul></div><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-add-task-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Add Task</button></div></form></div></div>
+    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select type="text" id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select type="text" id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></form></div></div>
     <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-4">Confirm Deletion</h3><p class="text-gray-600 mb-6">This action cannot be undone.</p><div class="flex justify-center gap-4"><button id="cancel-delete-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button id="confirm-delete-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button></div></div></div>
     <div id="calendar-day-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full"><h3 id="calendar-modal-title" class="text-xl font-bold mb-4 text-gray-800"></h3><div id="calendar-modal-tasks" class="space-y-2 max-h-80 overflow-y-auto"></div><div class="text-right mt-6"><button id="calendar-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button></div></div></div>
-    <div id="stats-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="stats-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Productivity Stats</h3><div class="space-y-4 max-h-[70vh] overflow-y-auto"><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Total Tasks Completed:</span><span id="stats-total-completed" class="font-bold text-lg text-indigo-600">0</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Overall Completion Rate:</span><span id="stats-completion-rate" class="font-bold text-lg text-indigo-600">0%</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Tasks Finished This Week:</span><span id="stats-completed-this-week" class="font-bold text-lg text-indigo-600">0</span></div><div><h4 class="font-medium text-gray-600 mb-2">Completed Task Log:</h4><div id="stats-category-breakdown" class="space-y-3"></div></div><div class="mt-6 pt-4 border-t border-gray-200"><h4 class="font-semibold text-red-600">Danger Zone</h4><p class="text-xs text-gray-500 mb-2">This action cannot be undone.</p><button id="delete-all-data-btn" class="w-full bg-red-100 text-red-700 hover:bg-red-200 font-bold py-2 px-4 rounded-lg">Delete All Task Data</button></div></div></div></div>
+    <div id="stats-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="stats-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Productivity Stats</h3><div class="space-y-4 max-h-[70vh] overflow-y-auto"><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Total Tasks Completed:</span><span id="stats-total-completed" class="font-bold text-lg text-indigo-600">0</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Overall Completion Rate:</span><span id="stats-completion-rate" class="font-bold text-lg text-indigo-600">0%</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Tasks Finished This Week:</span><span id="stats-completed-this-week" class="font-bold text-lg text-indigo-600">0</span></div><div><h4 class="font-medium text-gray-600 mb-2">Completed Task Log:</h4><div id="stats-category-breakdown" class="space-y-3"></div></div></div></div></div>
+    <div id="settings-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="settings-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Settings</h3><div class="space-y-4"><h4 class="font-semibold text-gray-700">Task View</h4><div class="flex items-center justify-between"><label for="toggle-show-completed" class="text-sm font-medium text-gray-600">Show Completed Tasks</label><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" id="toggle-show-completed" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label for="toggle-show-completed" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div><div class="mt-6 pt-4 border-t border-gray-200"><h4 class="font-semibold text-red-600">Danger Zone</h4><p class="text-xs text-gray-500 mb-2">This action cannot be undone.</p><button id="delete-all-data-btn" class="w-full bg-red-100 text-red-700 hover:bg-red-200 font-bold py-2 px-4 rounded-lg">Delete All Task Data</button></div></div></div></div>
 
-    <!-- Auth Container -->
     <div id="auth-container" class="hidden container mx-auto max-w-md p-4 sm:p-8 mt-10 animate-fade-in"><div id="logout-success-message" class="hidden bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 text-center"></div><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl"><h2 class="text-3xl font-bold text-center text-indigo-600 mb-8">Login</h2><form id="login-form"><input type="email" id="login-email" autocomplete="username" class="w-full bg-gray-100 rounded-lg p-3 border mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="Email"><input type="password" id="login-password" autocomplete="current-password" class="w-full bg-gray-100 rounded-lg p-3 border mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="Password"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md">Sign In</button></form><p id="auth-error" class="text-red-500 text-center mt-4"></p><p class="text-center text-sm text-gray-500 mt-6">To register an account, please contact the administrator.</p></div></div>
 
-    <!-- Planner Container -->
     <div id="planner-container" class="hidden container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="flex flex-wrap justify-between items-center mb-8 gap-4">
             <div><h1 class="text-3xl md:text-4xl font-bold text-indigo-600">My Planner</h1><p id="current-date" class="text-gray-500 text-sm md:text-base"></p></div>
@@ -92,6 +99,7 @@
                 </div>
                 <button id="header-today-btn" title="Today's Tasks" class="relative bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></button>
                 <button id="header-stats-btn" title="Productivity Stats" class="bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg></button>
+                <button id="header-settings-btn" title="Settings" class="bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
                 <button id="header-add-task-btn" title="Add New Task" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full transition-colors duration-200 shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg></button>
                 <button id="header-logout-btn" title="Log Out" class="bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             </div>
@@ -167,6 +175,10 @@
             headerStatsBtn: document.getElementById('header-stats-btn'), headerAddTaskBtn: document.getElementById('header-add-task-btn'), headerLogoutBtn: document.getElementById('header-logout-btn'),
             headerTodayBtn: document.getElementById('header-today-btn'), todayPanel: document.getElementById('today-panel'), todayPanelContent: document.getElementById('today-panel-content'),
             todayPanelCloseBtn: document.getElementById('today-panel-close-btn'),
+            headerSettingsBtn: document.getElementById('header-settings-btn'), 
+            settingsModal: document.getElementById('settings-modal'),
+            settingsModalCloseBtn: document.getElementById('settings-modal-close-btn'),
+            toggleShowCompleted: document.getElementById('toggle-show-completed'),
         };
 
         onAuthStateChanged(auth, user => {
@@ -187,11 +199,65 @@
         });
 
         async function loadTasks(userId) { isInitialLoad = true; refreshDynamicContent(); const tasksCollection = collection(db, "users", userId, "tasks"); if (unsubscribeTasks) unsubscribeTasks(); unsubscribeTasks = onSnapshot(query(tasksCollection, orderBy("date", "desc")), snapshot => { allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), subtasks: doc.data().subtasks || [], notes: doc.data().notes || '' })); if (isInitialLoad) { isInitialLoad = false; } refreshDynamicContent(); }); }
-        async function crudOperation(action, data) { const user = auth.currentUser; if (!user) return; const { id, ...payload } = data; showIndicator("Saving..."); try { if (action === 'add') await addDoc(collection(db, "users", user.uid, "tasks"), payload); else if (action === 'update') await updateDoc(doc(db, "users", user.uid, "tasks", id), payload); else if (action === 'delete') await deleteDoc(doc(db, "users", user.uid, "tasks", id)); } catch (error) { console.error("Firestore Error:", error); } finally { setTimeout(hideIndicator, 500); } }
         
-        function refreshDynamicContent() { const filteredTasks = getFilteredTasks(); if(currentSearchTerm || currentCategoryFilter !== 'All') { const count = filteredTasks.length; DOMElements.searchResultsCounter.textContent = `${count} result${count !== 1 ? 's' : ''}`; DOMElements.searchResultsCounter.classList.remove('hidden'); } else { DOMElements.searchResultsCounter.classList.add('hidden'); } if (currentView === 'list') renderListView(filteredTasks); else if (currentView === 'board') renderKanbanView(filteredTasks); else renderCalendarView(); updateDashboard(filteredTasks); updateDynamicElements(); }
+        // --- UPDATED crudOperation FUNCTION ---
+        async function crudOperation(action, data) { 
+            const user = auth.currentUser; 
+            if (!user) return; 
+            const { id, ...payload } = data; 
+            
+            showIndicator("Saving...", "info", true); // Show indicator with spinner 
+            
+            try { 
+                if (action === 'add') await addDoc(collection(db, "users", user.uid, "tasks"), payload); 
+                else if (action === 'update') await updateDoc(doc(db, "users", user.uid, "tasks", id), payload); 
+                else if (action === 'delete') await deleteDoc(doc(db, "users", user.uid, "tasks", id)); 
+                
+                // Show final success message (without spinner) for 3 seconds
+                const successMessage = action === 'add' ? 'Task Added' : action === 'update' ? 'Changes Saved' : 'Task Deleted';
+                showIndicator(successMessage, "success", false, 3000); 
+
+            } catch (error) { 
+                console.error("Firestore Error:", error); 
+                showIndicator("Error! Failed to save.", "warning", false, 4000);
+            }
+        }
+        // --------------------------------------
         
-        function getFilteredTasks() { const now = new Date(); return allTasks .filter(task => { if (!task.completed || !task.completedAt) return true; const completedDate = new Date(task.completedAt); completedDate.setHours(23, 59, 59, 999); return now <= completedDate; }) .filter(task => (task.text.toLowerCase().includes(currentSearchTerm.toLowerCase()) || (task.tags && task.tags.some(tag => tag.toLowerCase().includes(currentSearchTerm.toLowerCase())))) && (currentCategoryFilter === 'All' || task.category === currentCategoryFilter)); }
+        function refreshDynamicContent() { 
+            const filteredTasks = getFilteredTasks(); 
+            if(currentSearchTerm || currentCategoryFilter !== 'All') { 
+                const count = filteredTasks.length; 
+                DOMElements.searchResultsCounter.textContent = `${count} result${count !== 1 ? 's' : ''}`; 
+                DOMElements.searchResultsCounter.classList.remove('hidden'); 
+            } else { 
+                DOMElements.searchResultsCounter.classList.add('hidden'); 
+            } 
+            if (currentView === 'list') renderListView(filteredTasks); 
+            else if (currentView === 'board') renderKanbanView(filteredTasks); 
+            else renderCalendarView(); 
+            updateDashboard(filteredTasks); 
+            updateDynamicElements(); 
+        }
+        
+        // --- UPDATED getFilteredTasks FUNCTION ---
+        function getFilteredTasks() { 
+            const now = new Date();
+            const showCompleted = DOMElements.toggleShowCompleted ? DOMElements.toggleShowCompleted.checked : true; // Default to true if element not loaded/found
+
+            return allTasks
+                .filter(task => {
+                    // Only filter out completed tasks if the toggle is OFF
+                    if (!showCompleted && task.completed && task.completedAt) {
+                        // Keep task completed within the current day, hide otherwise
+                        const completedDate = new Date(task.completedAt);
+                        completedDate.setHours(23, 59, 59, 999);
+                        return now <= completedDate; 
+                    }
+                    return true;
+                })
+                .filter(task => (task.text.toLowerCase().includes(currentSearchTerm.toLowerCase()) || (task.tags && task.tags.some(tag => tag.toLowerCase().includes(currentSearchTerm.toLowerCase())))) && (currentCategoryFilter === 'All' || task.category === currentCategoryFilter)); 
+        }
 
         function renderListView(tasks) {
             DOMElements.taskListContainer.innerHTML = '';
@@ -217,11 +283,135 @@
         function renderCalendarView() { const m = currentCalendarDate.getMonth(), y = currentCalendarDate.getFullYear(); DOMElements.calendarGrid.innerHTML = ''; DOMElements.calendarMonthYear.textContent = new Date(y, m).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); const firstDay = new Date(y, m, 1).getDay(), daysInMonth = new Date(y, m + 1, 0).getDate(); for (let i = 0; i < firstDay; i++) DOMElements.calendarGrid.insertAdjacentHTML('beforeend', `<div class="calendar-day other-month"></div>`); for (let d = 1; d <= daysInMonth; d++) { const dayEl = document.createElement('div'); dayEl.className = 'calendar-day'; dayEl.dataset.day = d; const today = new Date(); if (d === today.getDate() && m === today.getMonth() && y === today.getFullYear()) dayEl.classList.add('is-today'); const headerEl = document.createElement('div'); headerEl.className = 'calendar-day-header'; headerEl.textContent = d; dayEl.appendChild(headerEl); const tasksOnDay = getFilteredTasks().filter(t => { const td = new Date(t.date + 'T00:00:00'); return td.getDate() === d && td.getMonth() === m && td.getFullYear() === y; }); const tasksContainer = document.createElement('div'); tasksContainer.className = 'flex flex-wrap pointer-events-none justify-center'; tasksOnDay.slice(0, 9).forEach(task => { tasksContainer.innerHTML += `<span class="task-dot ${categoryDotMap[task.category] || 'bg-gray-400'}" title="${task.text}"></span>`; }); dayEl.appendChild(tasksContainer); DOMElements.calendarGrid.appendChild(dayEl); } }
         function renderKanbanView(tasks) { DOMElements.kanbanBoard.innerHTML = '<p class="text-center text-sm text-gray-500 mb-4 col-span-full">Drag and drop tasks to change their category.</p>'; const columns = { 'Personal': [], 'Work': [], 'School': [], 'Other': [] }; tasks.forEach(task => { if (columns[task.category]) { columns[task.category].push(task); }}); for (const category in columns) { const columnEl = document.createElement('div'); columnEl.className = 'kanban-column'; columnEl.dataset.category = category; columnEl.innerHTML = `<h3 class="kanban-column-title">${categoryMap[category].icon} ${category}</h3><div class="kanban-tasks"></div>`; const tasksContainer = columnEl.querySelector('.kanban-tasks'); columns[category].forEach(task => { const cardEl = document.createElement('div'); cardEl.className = 'kanban-card'; cardEl.dataset.id = task.id; cardEl.draggable = true; cardEl.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5 text-gray-400 cursor-grab flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg><span class="flex-grow">${task.text}</span></div>`; tasksContainer.appendChild(cardEl); }); DOMElements.kanbanBoard.appendChild(columnEl); } }
 
-        function setupEventListeners() { DOMElements.headerStatsBtn.addEventListener('click', calculateAndShowStats); DOMElements.headerAddTaskBtn.addEventListener('click', showAddTaskModal); DOMElements.headerLogoutBtn.addEventListener('click', handleLogout); DOMElements.headerTodayBtn.addEventListener('click', handleTodayClick); DOMElements.cancelAddTaskBtn.addEventListener('click', hideAddTaskModal); DOMElements.addTaskForm.addEventListener('submit', handleAddTask); DOMElements.searchInput.addEventListener('input', e => { currentSearchTerm = e.target.value; refreshDynamicContent(); }); DOMElements.categoryFilters.addEventListener('click', handleCategoryFilter); DOMElements.viewListBtn.addEventListener('click', () => switchView('list')); DOMElements.viewBoardBtn.addEventListener('click', () => switchView('board')); DOMElements.viewCalendarBtn.addEventListener('click', () => switchView('calendar')); DOMElements.cancelDeleteBtn.addEventListener('click', hideConfirmModal); DOMElements.confirmDeleteBtn.addEventListener('click', () => { if (taskToDeleteId) { crudOperation('delete', { id: taskToDeleteId }); hideConfirmModal(); } }); DOMElements.cancelEditBtn.addEventListener('click', hideEditModal); DOMElements.editTaskForm.addEventListener('submit', handleEditTask); DOMElements.prevMonthBtn.addEventListener('click', () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendarView(); }); DOMElements.nextMonthBtn.addEventListener('click', () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendarView(); }); DOMElements.calendarGrid.addEventListener('mouseover', showCalendarTooltip); DOMElements.calendarGrid.addEventListener('mouseout', hideCalendarTooltip); DOMElements.calendarGrid.addEventListener('click', handleCalendarDayClick); DOMElements.calendarModalCloseBtn.addEventListener('click', () => DOMElements.calendarDayModal.classList.add('hidden')); DOMElements.statsModalCloseBtn.addEventListener('click', () => DOMElements.statsModal.classList.add('hidden')); DOMElements.deleteAllDataBtn.addEventListener('click', handleDeleteAllData); DOMElements.kanbanBoard.addEventListener('dragstart', e => { if(e.target.classList.contains('kanban-card')) { e.dataTransfer.setData('text/plain', e.target.dataset.id); e.target.classList.add('dragging'); } }); DOMElements.kanbanBoard.addEventListener('dragend', e => { if(e.target.classList.contains('kanban-card')) e.target.classList.remove('dragging'); }); DOMElements.kanbanBoard.addEventListener('dragover', e => { e.preventDefault(); const column = e.target.closest('.kanban-column'); if(column) column.classList.add('drag-over'); }); DOMElements.kanbanBoard.addEventListener('dragleave', e => { const column = e.target.closest('.kanban-column'); if(column) column.classList.remove('drag-over'); }); DOMElements.kanbanBoard.addEventListener('drop', e => { e.preventDefault(); const column = e.target.closest('.kanban-column'); if(column) { column.classList.remove('drag-over'); const taskId = e.dataTransfer.getData('text/plain'); const newCategory = column.dataset.category; crudOperation('update', {id: taskId, category: newCategory}); } }); document.addEventListener('click', (e) => { if (!DOMElements.headerTodayBtn.contains(e.target) && !DOMElements.todayPanel.contains(e.target)) { DOMElements.todayPanel.classList.add('hidden'); } }); }
+        // --- UPDATED setupEventListeners FUNCTION ---
+        function setupEventListeners() { 
+            DOMElements.headerStatsBtn.addEventListener('click', calculateAndShowStats); 
+            DOMElements.headerAddTaskBtn.addEventListener('click', showAddTaskModal); 
+            DOMElements.headerLogoutBtn.addEventListener('click', handleLogout); 
+            DOMElements.headerTodayBtn.addEventListener('click', handleTodayClick); 
+            
+            // Fixes: Settings button listeners
+            DOMElements.headerSettingsBtn.addEventListener('click', () => { 
+                DOMElements.settingsModal.classList.remove('hidden'); 
+            });
+            DOMElements.settingsModalCloseBtn.addEventListener('click', () => { 
+                DOMElements.settingsModal.classList.add('hidden'); 
+            });
+            DOMElements.toggleShowCompleted.addEventListener('change', refreshDynamicContent);
+
+            // Fixes: Today Panel Close button listener
+            DOMElements.todayPanelCloseBtn.addEventListener('click', () => { 
+                DOMElements.todayPanel.classList.add('hidden'); 
+            }); 
+            
+            DOMElements.cancelAddTaskBtn.addEventListener('click', hideAddTaskModal); 
+            DOMElements.addTaskForm.addEventListener('submit', handleAddTask); 
+            DOMElements.searchInput.addEventListener('input', e => { 
+                currentSearchTerm = e.target.value; 
+                refreshDynamicContent(); 
+            }); 
+            DOMElements.categoryFilters.addEventListener('click', handleCategoryFilter); 
+            DOMElements.viewListBtn.addEventListener('click', () => switchView('list')); 
+            DOMElements.viewBoardBtn.addEventListener('click', () => switchView('board')); 
+            DOMElements.viewCalendarBtn.addEventListener('click', () => switchView('calendar')); 
+            DOMElements.cancelDeleteBtn.addEventListener('click', hideConfirmModal); 
+            DOMElements.confirmDeleteBtn.addEventListener('click', () => { 
+                if (taskToDeleteId) { 
+                    crudOperation('delete', { id: taskToDeleteId }); 
+                    hideConfirmModal(); 
+                } 
+            }); 
+            DOMElements.cancelEditBtn.addEventListener('click', hideEditModal); 
+            DOMElements.editTaskForm.addEventListener('submit', handleEditTask); 
+            DOMElements.prevMonthBtn.addEventListener('click', () => { 
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); 
+                renderCalendarView(); 
+            }); 
+            DOMElements.nextMonthBtn.addEventListener('click', () => { 
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); 
+                renderCalendarView(); 
+            }); 
+            DOMElements.calendarGrid.addEventListener('mouseover', showCalendarTooltip); 
+            DOMElements.calendarGrid.addEventListener('mouseout', hideCalendarTooltip); 
+            DOMElements.calendarGrid.addEventListener('click', handleCalendarDayClick); 
+            DOMElements.calendarModalCloseBtn.addEventListener('click', () => DOMElements.calendarDayModal.classList.add('hidden')); 
+            DOMElements.statsModalCloseBtn.addEventListener('click', () => DOMElements.statsModal.classList.add('hidden')); 
+            DOMElements.deleteAllDataBtn.addEventListener('click', handleDeleteAllData); 
+            DOMElements.kanbanBoard.addEventListener('dragstart', e => { 
+                if(e.target.classList.contains('kanban-card')) { 
+                    e.dataTransfer.setData('text/plain', e.target.dataset.id); 
+                    e.target.classList.add('dragging'); 
+                } 
+            }); 
+            DOMElements.kanbanBoard.addEventListener('dragend', e => { 
+                if(e.target.classList.contains('kanban-card')) e.target.classList.remove('dragging'); 
+            }); 
+            DOMElements.kanbanBoard.addEventListener('dragover', e => { 
+                e.preventDefault(); 
+                const column = e.target.closest('.kanban-column'); 
+                if(column) column.classList.add('drag-over'); 
+            }); 
+            DOMElements.kanbanBoard.addEventListener('dragleave', e => { 
+                const column = e.target.closest('.kanban-column'); 
+                if(column) column.classList.remove('drag-over'); 
+            }); 
+            DOMElements.kanbanBoard.addEventListener('drop', e => { 
+                e.preventDefault(); 
+                const column = e.target.closest('.kanban-column'); 
+                if(column) { 
+                    column.classList.remove('drag-over'); 
+                    const taskId = e.dataTransfer.getData('text/plain'); 
+                    const newCategory = column.dataset.category; 
+                    crudOperation('update', {id: taskId, category: newCategory}); 
+                } 
+            }); 
+            document.addEventListener('click', (e) => { 
+                if (!DOMElements.headerTodayBtn.contains(e.target) && !DOMElements.todayPanel.contains(e.target)) { 
+                    DOMElements.todayPanel.classList.add('hidden'); 
+                } 
+            }); 
+        }
+
         function attachDynamicListeners(container) { container.addEventListener('click', e => { const taskLi = e.target.closest('li.task-item'); if (!taskLi) return; const taskId = taskLi.dataset.id; const targetCheckbox = e.target.closest('.task-checkbox'); if (targetCheckbox) { const isCompleted = targetCheckbox.checked; if (isCompleted) { const task = allTasks.find(t => t.id === taskId); if (task && task.subtasks && task.subtasks.length > 0 && !task.subtasks.every(s => s.completed)) { const alertDiv = taskLi.querySelector('.subtask-alert'); if(alertDiv) { alertDiv.textContent = "Please complete all subtasks first!"; alertDiv.classList.remove('hidden'); taskLi.classList.add('flash-error'); setTimeout(() => { alertDiv.classList.add('hidden'); taskLi.classList.remove('flash-error'); }, 3000); } targetCheckbox.checked = false; return; } } const updatePayload = { id: taskId, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null }; if (isCompleted) { handleRecurringTask(allTasks.find(t => t.id === taskId)); } crudOperation('update', updatePayload); } else if (e.target.closest('.edit-btn')) { showEditModal(taskId); } else if (e.target.closest('.delete-btn')) { showConfirmModal(taskId); } else if (e.target.closest('.details-btn')) { const details = taskLi.querySelector('.details-container'); const icon = e.target.closest('.details-btn').querySelector('svg'); details.classList.toggle('open'); icon.classList.toggle('rotate-180'); } else if (e.target.closest('.add-subtask-btn')) { const textInput = taskLi.querySelector('.new-subtask-input'); const dateInput = taskLi.querySelector('.new-subtask-date-input'); if (textInput.value.trim()) { handleAddSubtask(taskId, textInput.value.trim(), dateInput.value); textInput.value = ''; dateInput.value = ''; } } else if (e.target.closest('.subtask-checkbox')) { handleSubtaskToggle(taskId, parseInt(e.target.closest('.subtask-checkbox').dataset.subtaskIndex, 10)); } else if (e.target.closest('.edit-subtask-btn')) { handleEditSubtask(e.target.closest('.edit-subtask-btn')); } else if (e.target.closest('.delete-subtask-btn')) { handleDeleteSubtask(e.target.closest('.delete-subtask-btn')); } }); container.addEventListener('input', e => { if (e.target.matches('.task-notes-textarea')) autoResizeTextarea(e.target); }); container.addEventListener('blur', e => { if (e.target.matches('.task-notes-textarea')) { const taskLi = e.target.closest('li.task-item'); const taskId = taskLi.dataset.id; crudOperation('update', { id: taskId, notes: e.target.value }); } }, true); }
         
-        async function handleAddTask(e) { e.preventDefault(); const { addTaskText, addTaskDate, addTaskTime, addTaskCategory, addTaskPriority, addTaskTags, addTaskRepeat } = DOMElements; if (addTaskText.value.trim() && addTaskDate.value) { await crudOperation('add', { text: addTaskText.value.trim(), date: addTaskDate.value, time: addTaskTime.value, category: addTaskCategory.value, priority: addTaskPriority.value, completed: false, notes: '', subtasks: [], completedAt: null, tags: parseTags(addTaskTags.value), recurrence: addTaskRepeat.value, }); hideAddTaskModal(); showIndicator("Task Saved", "success"); } }
-        async function handleEditTask(e) { e.preventDefault(); const task = allTasks.find(t => t.id === taskToEditId); if (task) { await crudOperation('update', { ...task, id: taskToEditId, text: DOMElements.editTaskText.value, date: DOMElements.editTaskDate.value, time: DOMElements.editTaskTime.value, category: DOMElements.editTaskCategory.value, priority: DOMElements.editTaskPriority.value, notes: DOMElements.editTaskNotes.value, tags: parseTags(DOMElements.editTaskTags.value) }); hideEditModal(); showIndicator("Task Edited", "info"); } }
+        async function handleAddTask(e) { 
+            e.preventDefault(); 
+            const { addTaskText, addTaskDate, addTaskTime, addTaskCategory, addTaskPriority, addTaskTags, addTaskRepeat } = DOMElements; 
+            if (addTaskText.value.trim() && addTaskDate.value) { 
+                await crudOperation('add', { 
+                    text: addTaskText.value.trim(), 
+                    date: addTaskDate.value, 
+                    time: addTaskTime.value, 
+                    category: addTaskCategory.value, 
+                    priority: addTaskPriority.value, 
+                    completed: false, 
+                    notes: '', 
+                    subtasks: [], 
+                    completedAt: null, 
+                    tags: parseTags(addTaskTags.value), 
+                    recurrence: addTaskRepeat.value, 
+                }); 
+                hideAddTaskModal(); 
+            } 
+        }
+        async function handleEditTask(e) { 
+            e.preventDefault(); 
+            const task = allTasks.find(t => t.id === taskToEditId); 
+            if (task) { 
+                await crudOperation('update', { 
+                    ...task, 
+                    id: taskToEditId, 
+                    text: DOMElements.editTaskText.value, 
+                    date: DOMElements.editTaskDate.value, 
+                    time: DOMElements.editTaskTime.value, 
+                    category: DOMElements.editTaskCategory.value, 
+                    priority: DOMElements.editTaskPriority.value, 
+                    notes: DOMElements.editTaskNotes.value, 
+                    tags: parseTags(DOMElements.editTaskTags.value) 
+                }); 
+                hideEditModal(); 
+            } 
+        }
         function handleCategoryFilter(e) { const target = e.target.closest('.category-filter-btn'); if (target) { currentCategoryFilter = target.dataset.category; styleCategoryFilters(); refreshDynamicContent(); } }
         function handleAddSubtask(taskId, text, dueDate) { const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtask = { text, completed: false, completedAt: null, dueDate: dueDate || null }; crudOperation('update', { id: taskId, subtasks: [...(task.subtasks || []), newSubtask] }); } }
         function handleSubtaskToggle(taskId, subtaskIndex) { const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtasks = task.subtasks.map((sub, i) => { if (i === subtaskIndex) { const isCompleted = !sub.completed; return { ...sub, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null }; } return sub; }); crudOperation('update', { id: taskId, subtasks: newSubtasks }); } }
@@ -229,7 +419,15 @@
         function handleDeleteSubtask(button) { if (!confirm('Are you sure you want to delete this subtask?')) return; const { taskId, subtaskIndex } = button.dataset; const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtasks = task.subtasks.filter((_, i) => i != subtaskIndex); crudOperation('update', { id: taskId, subtasks: newSubtasks }); } }
         function handleCalendarDayClick(e) { const dayEl = e.target.closest('.calendar-day:not(.other-month)'); if (!dayEl) return; const day = parseInt(dayEl.dataset.day, 10); const date = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), day); const tasks = allTasks.filter(t => new Date(t.date + 'T00:00:00').toDateString() === date.toDateString()); DOMElements.calendarModalTitle.textContent = `Tasks for ${date.toLocaleDateString('en-US', { dateStyle: 'full' })}`; DOMElements.calendarModalTasks.innerHTML = tasks.length ? tasks.map(t => `<div class="p-2 rounded-md ${t.completed ? 'bg-gray-100' : 'bg-blue-50'} flex items-center gap-2"><div class="w-2 h-2 rounded-full ${categoryDotMap[t.category]}"></div><span class="${t.completed ? 'completed task-title-completed' : ''}">${t.text}</span></div>`).join('') : '<p class="text-gray-500">No tasks for this day.</p>'; DOMElements.calendarDayModal.classList.remove('hidden'); }
         function calculateAndShowStats() { const completedTasks = allTasks.filter(t => t.completed); const totalCompleted = completedTasks.length; const totalTasks = allTasks.length; DOMElements.statsTotalCompleted.textContent = totalCompleted; DOMElements.statsCompletionRate.textContent = totalTasks > 0 ? `${Math.round((totalCompleted / totalTasks) * 100)}%` : 'N/A'; const now = new Date(); const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); startOfWeek.setHours(0,0,0,0); const completedThisWeek = completedTasks.filter(t => new Date(t.completedAt) >= startOfWeek).length; DOMElements.statsCompletedThisWeek.textContent = completedThisWeek; const completedByCategory = completedTasks.reduce((acc, task) => { const category = task.category || 'Other'; if (!acc[category]) acc[category] = []; acc[category].push(task); return acc; }, {}); DOMElements.statsCategoryBreakdown.innerHTML = Object.keys(completedByCategory).length > 0 ? Object.entries(completedByCategory).map(([cat, tasks]) => `<div class="mt-2"><h5 class="font-semibold text-sm ${categoryMap[cat].color.split(' ')[1]} flex items-center gap-2">${categoryMap[cat].icon} ${cat}</h5><ul class="space-y-1">${tasks.map(t => { const dueTime = t.time ? ` at ${formatTo12Hour(t.time)}` : ''; const completedTime = t.completedAt ? ` at ${formatTo12Hour(new Date(t.completedAt).toTimeString())}` : ''; return `<li class="ml-4 text-sm text-gray-600"><span class="font-medium">${t.text}</span><div class="text-xs text-gray-400 pl-2">Due: ${new Date(t.date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}${dueTime} | Completed: ${new Date(t.completedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}${completedTime}</div></li>`}).join('')}</ul></div>`).join('') : `<p class="text-gray-500 text-sm">No completed tasks yet.</p>`; DOMElements.statsModal.classList.remove('hidden'); }
-        function handleLogout() { showIndicator("Logging out...", "info"); signOut(auth).then(() => { hideIndicator(); DOMElements.loginForm.reset(); showFlashMessage(DOMElements.logoutSuccessMessage, "Successfully logged out!"); }); }
+        
+        function handleLogout() { 
+            showIndicator("Logging out...", "info", true); 
+            signOut(auth).then(() => { 
+                hideIndicator(); 
+                DOMElements.loginForm.reset(); 
+                showFlashMessage(DOMElements.logoutSuccessMessage, "Successfully logged out!"); 
+            }); 
+        }
         function handleTodayClick() { renderTodayPanel(); DOMElements.todayPanel.classList.toggle('hidden'); }
         function renderTodayPanel() { const today = new Date(); const todayStr = today.toISOString().split('T')[0]; today.setDate(today.getDate() + 1); const tomorrowStr = today.toISOString().split('T')[0]; const overdueTasks = allTasks.filter(t => !t.completed && t.date < todayStr); const todayTasks = allTasks.filter(t => !t.completed && t.date === todayStr); const tomorrowTasks = allTasks.filter(t => !t.completed && t.date === tomorrowStr); const renderSection = (title, tasks, color) => { if(tasks.length === 0) return `<div class="p-3"><h4 class="font-semibold text-sm ${color} mb-2">${title}</h4><p class="text-xs text-gray-400">Nothing to show.</p></div>`; return `<div class="p-3"><h4 class="font-semibold text-sm ${color} mb-2">${title}</h4><ul class="space-y-2">${tasks.map(t => `<li class="text-xs text-gray-700 flex items-center gap-2"><span class="priority-flag ${priorityFlagMap[t.priority]}"></span>${t.text}</li>`).join('')}</ul></div>`; }; DOMElements.todayPanelContent.innerHTML = renderSection('Overdue', overdueTasks, 'text-red-500') + renderSection('Today', todayTasks, 'text-indigo-500') + renderSection('Tomorrow', tomorrowTasks, 'text-gray-500'); }
         function handleDeleteAllData() { const confirmation = prompt('This will permanently delete ALL of your tasks. This action cannot be undone. To confirm, please type "DELETE" below:'); if (confirmation === "DELETE") { showIndicator("Deleting all data...", "warning"); const deletePromises = allTasks.map(task => deleteDoc(doc(db, "users", auth.currentUser.uid, "tasks", task.id))); Promise.all(deletePromises) .then(() => { showIndicator("All tasks deleted", "success"); }) .catch(error => { console.error("Error deleting all tasks:", error); hideIndicator(); alert("An error occurred while deleting your data."); }); } else { alert("Deletion cancelled. Your data is safe."); } }
@@ -251,19 +449,53 @@
         function showFlashMessage(element, message) { element.textContent = message; element.classList.remove('hidden'); setTimeout(() => element.classList.add('hidden'), 3000); }
         function clearUI() { DOMElements.taskListContainer.innerHTML = ''; if (DOMElements.dashboardPendingBreakdown) DOMElements.dashboardPendingBreakdown.innerHTML = ''; if(DOMElements.dashboardNextTask) DOMElements.dashboardNextTask.innerHTML = `<p class="text-gray-400 text-center">No upcoming tasks!</p>`; if(DOMElements.dashboardOverdue) DOMElements.dashboardOverdue.innerHTML = `<p class="text-gray-400 text-center">No overdue tasks!</p>`; if(DOMElements.dashboardOverdueCount) DOMElements.dashboardOverdueCount.textContent = '0'; }
         function setSmartDefaults() { DOMElements.addTaskDate.value = new Date().toISOString().split('T')[0]; const now = new Date(); DOMElements.addTaskTime.value = `${String((now.getHours() + 1) % 24).padStart(2, '0')}:00`; }
-        function showIndicator(message = "Saving...") { DOMElements.indicatorText.textContent = message; DOMElements.appIndicator.classList.remove('hidden'); }
+        
+        // --- UPDATED showIndicator FUNCTION ---
+        function showIndicator(message, status = "info", showSpinner = false, duration = 500) { 
+            DOMElements.indicatorText.textContent = message; 
+            // Set the class for the status color
+            DOMElements.appIndicator.className = `fixed bottom-5 left-1/2 -translate-x-1/2 text-white text-sm py-2 px-4 rounded-full shadow-lg flex items-center gap-2 z-50 ${status}`;
+            
+            const spinner = document.getElementById('indicator-spinner');
+            if (spinner) {
+                // Show/hide spinner based on parameter
+                spinner.classList.toggle('hidden', !showSpinner);
+            }
+            
+            DOMElements.appIndicator.classList.remove('hidden'); 
+
+            if (!showSpinner) {
+                // If it's a success/info message (no spinner), hide it after the duration
+                setTimeout(hideIndicator, duration);
+            }
+        }
+        
         function hideIndicator() { DOMElements.appIndicator.classList.add('hidden'); }
+        // --------------------------------------
+        
         function styleCategoryFilters() { document.querySelectorAll('.category-filter-btn').forEach(btn => { const category = btn.dataset.category; if (category !== 'All' && !btn.querySelector('svg')) { btn.innerHTML = `${categoryMap[category].icon} ${category}`; } btn.className = 'category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2'; if (category === currentCategoryFilter) { if (category === 'All') btn.classList.add('bg-indigo-600', 'text-white'); else btn.className += ` ${categoryActiveMap[category]}`; } else { if (category === 'All') btn.classList.add('bg-gray-200', 'text-gray-800'); else btn.className += ` ${categoryMap[category].color}`; } }); }
         function parseTags(tagsString) { return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0 && tag.startsWith('#')).map(tag => tag.toLowerCase()); }
         function handleRecurringTask(task) { if(!task.recurrence || task.recurrence === 'none') return; const nextDueDate = new Date(task.date + 'T00:00:00'); if(task.recurrence === 'daily') nextDueDate.setDate(nextDueDate.getDate() + 1); else if (task.recurrence === 'weekly') nextDueDate.setDate(nextDueDate.getDate() + 7); else if (task.recurrence === 'monthly') nextDueDate.setMonth(nextDueDate.getMonth() + 1); const { id, completed, completedAt, ...new_task_data } = task; const newTask = { ...new_task_data, date: nextDueDate.toISOString().split('T')[0], completed: false, completedAt: null, }; crudOperation('add', newTask); crudOperation('update', { id: task.id, recurrence: 'none' }); }
         function autoResizeTextarea(textarea) { textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
         
-        DOMElements.loginForm.addEventListener('submit', async (e) => { e.preventDefault(); DOMElements.authError.textContent = ''; showIndicator("Signing in...", "info", 1000); const email = e.target.elements['login-email'].value; const password = e.target.elements['login-password'].value; try { await signInWithEmailAndPassword(auth, email, password); sessionStorage.setItem('loginJustOccurred', 'true'); } catch (error) { DOMElements.authError.textContent = 'Incorrect email or password.'; hideIndicator(); } });
+        DOMElements.loginForm.addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            DOMElements.authError.textContent = ''; 
+            showIndicator("Signing in...", "info", true); 
+            const email = e.target.elements['login-email'].value; 
+            const password = e.target.elements['login-password'].value; 
+            try { 
+                await signInWithEmailAndPassword(auth, email, password); 
+                sessionStorage.setItem('loginJustOccurred', 'true'); 
+                hideIndicator();
+            } catch (error) { 
+                DOMElements.authError.textContent = 'Incorrect email or password.'; 
+                hideIndicator(); 
+            } 
+        });
         
         setupEventListeners();
         styleCategoryFilters();
     </script>
 </body>
 </html>
-
-
