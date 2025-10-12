@@ -32,7 +32,8 @@
             cursor: pointer; 
             display: flex; 
             flex-direction: column; 
-            position: relative; /* Needed for pulsing effect */
+            position: relative; 
+            box-sizing: border-box; /* Ensure padding/border are included in the element's total width and height */
         }
         .calendar-day:not(.other-month):hover { background-color: #eff6ff; }
         .calendar-day.other-month { background-color: #f9fafb; color: #d1d5db; cursor: default; }
@@ -54,10 +55,14 @@
         .kanban-column.drag-over { background-color: #e0e7ff; }
         @keyframes flash-red { 50% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4); } }
         .flash-error { animation: flash-red 0.7s ease-out; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+        
+        /* PULSING FIX: Use box-shadow that doesn't change dimensions */
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+
         .pulse-overdue { animation: pulse-red 2s infinite; }
         .pulse-due-soon { animation: pulse-orange 2s infinite; }
+
         .skeleton { background-color: #e5e7eb; border-radius: 0.5rem; }
         .skeleton-title { width: 60%; height: 20px; margin-bottom: 0.5rem; }
         .skeleton-meta { width: 40%; height: 16px; }
@@ -94,9 +99,18 @@
     </div>
 
     <div id="add-task-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Add New Task</h3><form id="add-task-form" class="space-y-4"><div class="relative"><input type="text" id="add-task-text" placeholder="What do you need to do?" class="w-full bg-gray-100 rounded-lg pl-4 pr-12 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><button type="button" id="generate-subtasks-btn" title="✨ Generate Subtasks with AI" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-9l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L12.707 10l-1.414 1.414a1 1 0 01-1.414 0L7.586 9.121a1 1 0 010-1.414L8.293 7a1 1 0 011.414 0L12 9.293l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L13.414 12l1.414 1.414a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414 0L12 13.414l-2.293 2.293a1 1 0 01-1.414 0l-.707-.707a1 1 0 010-1.414L10.586 12 9.172 10.586a1 1 0 010-1.414l.707-.707a1 1 0 011.414 0L12 8.586z" /></svg></button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="add-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="add-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low Priority</option><option value="medium" selected>Medium Priority</option><option value="high">High Priority</option></select><select id="add-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option><option value="Work">Work</option><option value="School">School</option><option value="Other">Other</option></select></div><div><label for="add-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="add-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-repeat" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><div><label for="add-task-reminder" class="block mb-1 text-sm font-medium text-gray-600">Reminder</label><select id="add-task-reminder" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">No reminder</option><option value="5">5 minutes before</option><option value="15">15 minutes before</option><option value="60">1 hour before</option></select><div id="add-email-toggle-container" class="hidden mt-2 pl-2"><label class="flex items-center space-x-2"><input type="checkbox" id="add-task-email-toggle" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="text-sm text-gray-600">Also send an email reminder?</span></label></div></div></div><div id="generated-subtasks-container" class="hidden space-y-2 pt-2 max-h-32 overflow-y-auto"><h4 class="text-sm font-bold text-gray-600">✨ AI Generated Subtasks:</h4><ul id="generated-subtasks-list" class="space-y-1 text-sm text-gray-700"></ul></div><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-add-task-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Add Task</button></div></form></div></div>
-    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></form></div></div>
+    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-between gap-4 pt-4"><button type="button" id="edit-history-btn" class="hidden bg-gray-100 hover:bg-gray-200 text-sm font-bold py-2 px-4 rounded-lg">Edit History</button><div class="flex gap-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></div></form></div></div>
     <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-4">Confirm Deletion</h3><p class="text-gray-600 mb-6">This action cannot be undone.</p><div class="flex justify-center gap-4"><button id="cancel-delete-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button id="confirm-delete-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button></div></div></div>
     <div id="calendar-day-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full"><h3 id="calendar-modal-title" class="text-xl font-bold mb-4 text-gray-800"></h3><div id="calendar-modal-tasks" class="space-y-2 max-h-80 overflow-y-auto"></div><div class="text-right mt-6"><button id="calendar-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button></div></div></div>
+    <div id="history-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Task Edit History</h3>
+            <div id="history-modal-content" class="space-y-4 max-h-96 overflow-y-auto"></div>
+            <div class="text-right mt-6">
+                <button id="history-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
     <div id="stats-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="stats-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Productivity Stats</h3><div class="space-y-4 max-h-[70vh] overflow-y-auto"><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Total Tasks Completed:</span><span id="stats-total-completed" class="font-bold text-lg text-indigo-600">0</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Overall Completion Rate:</span><span id="stats-completion-rate" class="font-bold text-lg text-indigo-600">0%</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Tasks Finished This Week:</span><span id="stats-completed-this-week" class="font-bold text-lg text-indigo-600">0</span></div><div><h4 class="font-medium text-gray-600 mb-2">Completed Task Log:</h4><div id="stats-category-breakdown" class="space-y-3"></div></div></div></div></div>
     <div id="settings-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="settings-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Settings</h3><div class="space-y-4"><h4 class="font-semibold text-gray-700">Task View</h4><div class="flex items-center justify-between"><label for="toggle-show-completed" class="text-sm font-medium text-gray-600">Show Completed Tasks</label><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" id="toggle-show-completed" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label for="toggle-show-completed" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div><div class="mt-6 pt-4 border-t border-gray-200"><h4 class="font-semibold text-red-600">Danger Zone</h4><p class="text-xs text-gray-500 mb-2">This action cannot be undone.</p><button id="delete-all-data-btn" class="w-full bg-red-100 text-red-700 hover:bg-red-200 font-bold py-2 px-4 rounded-lg">Delete All Task Data</button></div></div></div></div>
 
@@ -222,7 +236,13 @@
             calendarModalTitle: document.getElementById('calendar-modal-title'),
             calendarModalTasks: document.getElementById('calendar-modal-tasks'),
             calendarModalCloseBtn: document.getElementById('calendar-modal-close-btn'),
-            
+
+            // New History Elements
+            historyModal: document.getElementById('history-modal'),
+            historyModalContent: document.getElementById('history-modal-content'),
+            historyModalCloseBtn: document.getElementById('history-modal-close-btn'),
+            editHistoryBtn: document.getElementById('edit-history-btn'),
+
             // Logout Panel Elements
             logoutPanel: document.getElementById('logout-panel'),
             logoutUserName: document.getElementById('logout-user-name'),
@@ -248,13 +268,56 @@
             DOMElements.loader.classList.add('hidden');
         });
 
-        async function loadTasks(userId) { isInitialLoad = true; refreshDynamicContent(); const tasksCollection = collection(db, "users", userId, "tasks"); if (unsubscribeTasks) unsubscribeTasks(); unsubscribeTasks = onSnapshot(query(tasksCollection, orderBy("date", "desc")), snapshot => { allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), subtasks: doc.data().subtasks || [], notes: doc.data().notes || '' })); if (isInitialLoad) { isInitialLoad = false; } refreshDynamicContent(); }); }
+        async function loadTasks(userId) { isInitialLoad = true; refreshDynamicContent(); const tasksCollection = collection(db, "users", userId, "tasks"); if (unsubscribeTasks) unsubscribeTasks(); unsubscribeTasks = onSnapshot(query(tasksCollection, orderBy("date", "desc")), snapshot => { 
+            // Ensure 'history' property exists on all tasks for safety
+            allTasks = snapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data(), 
+                subtasks: doc.data().subtasks || [], 
+                notes: doc.data().notes || '',
+                history: doc.data().history || [] // Initialize history array
+            })); 
+            if (isInitialLoad) { isInitialLoad = false; } refreshDynamicContent(); 
+        }); }
         
+        // Helper to find differences for history logging
+        function getChanges(oldTask, newTask) {
+            const changes = [];
+            const fields = ['text', 'date', 'time', 'priority', 'category'];
+            
+            fields.forEach(field => {
+                const oldValue = oldTask[field] || 'N/A';
+                const newValue = newTask[field] || 'N/A';
+                
+                if (oldValue !== newValue) {
+                    changes.push({ field, oldValue, newValue });
+                }
+            });
+            return changes;
+        }
+
         async function crudOperation(action, data) { 
             const user = auth.currentUser; 
             if (!user) return; 
             const { id, ...payload } = data; 
             
+            // Handle Edit History Logging
+            if (action === 'update') {
+                const oldTask = allTasks.find(t => t.id === id);
+                const changes = getChanges(oldTask, payload);
+
+                if (changes.length > 0) {
+                    const newHistoryEntry = {
+                        timestamp: new Date().toISOString(),
+                        changes: changes,
+                        action: 'Edited'
+                    };
+                    
+                    // Add new entry to existing history or create a new one
+                    payload.history = [...(oldTask.history || []), newHistoryEntry];
+                }
+            }
+
             showIndicator("Saving...", "info", true); 
             
             try { 
@@ -323,7 +386,26 @@
         }
         
         function updateDashboard(tasks) { if(isInitialLoad) return; const pendingTasks = tasks.filter(t => !t.completed); const now = new Date(); const todayString = now.toISOString().split('T')[0]; const todayPendingCount = pendingTasks.filter(t => t.date === todayString).length; DOMElements.currentDate.innerHTML = `${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})} <span id="today-task-counter" class="text-gray-400 font-normal ml-2"></span>`; document.getElementById('today-task-counter').textContent = todayPendingCount > 0 ? `(${todayPendingCount} tasks left)`: '(No tasks for today)'; const upcomingTasks = pendingTasks.map(t => ({ ...t, dateTime: new Date(`${t.date}T${t.time || '23:59:59'}`) })).filter(t => t.dateTime >= now).sort((a, b) => a.dateTime - b.dateTime); if (upcomingTasks.length > 0) { const firstTask = upcomingTasks[0]; const firstDueTime = firstTask.dateTime.getTime(); const allNextTasks = upcomingTasks.filter(t => t.dateTime.getTime() === firstDueTime); DOMElements.dashboardNextTask.innerHTML = `<div class="text-left">${allNextTasks.map(task => `<p class="font-bold text-lg text-indigo-600 break-words">${task.text}</p>`).join('')}<p class="text-sm text-gray-500 mt-1">${getRelativeDateGroup(firstTask.date)} ${firstTask.time ? `at ${formatTo12Hour(firstTask.time)}` : ''}</p></div>`; } else { DOMElements.dashboardNextTask.innerHTML = `<p class="text-gray-400 text-center">No upcoming tasks!</p>`; } DOMElements.dashboardPendingBreakdown.innerHTML = `<div class="flex justify-between"><span>Today:</span> <span class="font-bold">${todayPendingCount}</span></div> <div class="flex justify-between"><span>This Week:</span> <span class="font-bold">${pendingTasks.filter(t => { const d = new Date(t.date); const endOfWeek = new Date(now); endOfWeek.setDate(now.getDate() + 6 - now.getDay()); return d > now && d <= endOfWeek; }).length}</span></div> <div class="flex justify-between"><span>This Month:</span> <span class="font-bold">${pendingTasks.filter(t => { const d = new Date(t.date); const endOfWeek = new Date(now); endOfWeek.setDate(now.getDate() + 6 - now.getDay()); const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); return d > endOfWeek && d <= endOfMonth; }).length}</span></div>`; const overdueTasks = pendingTasks.map(t => ({ ...t, dateTime: new Date(`${t.date}T${t.time || '23:59:59'}`) })).filter(t => t.dateTime < now).sort((a, b) => a.dateTime - b.dateTime); DOMElements.dashboardOverdueCount.textContent = overdueTasks.length; if (overdueTasks.length > 0) { DOMElements.dashboardOverdue.innerHTML = `<ul class="space-y-1 text-left">${overdueTasks.slice(0, 3).map(task => `<li class="font-semibold text-red-500 truncate">${task.text}</li>`).join('')}</ul>`; } else { DOMElements.dashboardOverdue.innerHTML = `<p class="text-gray-400 text-center">No overdue tasks!</p>`; } }
-        function createTaskElement(task) { const taskDateTime = new Date(`${task.date}T${task.time || '23:59:59'}`); let timeDiffHtml = !task.completed ? `<span class="relative-time" data-datetime="${taskDateTime.toISOString()}"></span>` : ''; const completedAtHtml = task.completed && task.completedAt ? `<div class="completion-timestamp text-green-600 font-semibold mt-1 text-xs flex items-center gap-1 pl-8"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Completed: ${new Date(task.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${formatTo12Hour(new Date(task.completedAt).toTimeString())}</span></div>` : ''; const subtasksHtml = (task.subtasks || []).map((sub, index) => `<div class="flex items-center justify-between gap-2 ml-4"><div class="flex items-start gap-2 flex-1"><input type="checkbox" id="subtask-${task.id}-${index}" data-subtask-index="${index}" class="subtask-checkbox h-4 w-4 mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${sub.completed ? 'checked' : ''}><div class="flex-1"><label for="subtask-${task.id}-${index}" class="text-sm ${sub.completed ? 'completed task-title-completed' : ''}">${sub.text}</label>${sub.completed && sub.completedAt ? `<div class="text-xs text-gray-400 completion-timestamp">Completed: ${new Date(sub.completedAt).toLocaleDateString('en-US', {month:'short',day:'numeric'})} at ${formatTo12Hour(new Date(sub.completedAt).toTimeString())}</div>` : ''}</div></div><div class="flex-shrink-0"><button class="edit-subtask-btn p-1 rounded-full hover:bg-gray-200" data-task-id="${task.id}" data-subtask-index="${index}"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button class="delete-subtask-btn p-1 rounded-full hover:bg-gray-200" data-task-id="${task.id}" data-subtask-index="${index}"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div>`).join(''); const subtaskProgress = task.subtasks && task.subtasks.length > 0 ? `(${task.subtasks.filter(s=>s.completed).length}/${task.subtasks.length})` : ''; const categoryClass = categoryMap[task.category].color || categoryMap['Other'].color; const hasNotes = task.notes && task.notes.trim() !== ''; const hasSubtasks = task.subtasks && task.subtasks.length > 0; const noteSnippet = hasNotes ? task.notes.substring(0, 40) + (task.notes.length > 40 ? '...' : '') : ''; const subtaskIndicatorHtml = hasSubtasks ? `<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>` : ''; return `<li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" data-datetime="${taskDateTime.toISOString()}"><div class="flex items-start justify-between p-4"><div class="flex items-start gap-3 flex-grow min-w-0"><input type="checkbox" class="task-checkbox h-5 w-5 rounded border-gray-300 text-indigo-600 flex-shrink-0 mt-1 focus:ring-indigo-500" ${task.completed ? 'checked' : ''}><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span><span class="flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-full ${categoryClass}">${categoryMap[task.category].icon} ${task.category}</span><span class="font-medium break-words ${task.completed ? 'task-title-completed' : ''}">${task.text}</span></div><div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${task.completed ? 'completed' : ''}"><span>${taskDateTime.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} ${formatTo12Hour(task.time)}</span>${!task.completed ? `<span class="mx-1">•</span> ${timeDiffHtml}` : ''}${hasNotes ? `<div class="flex items-center gap-1 text-gray-400" title="${task.notes}"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg><span class="truncate italic">${noteSnippet}</span></div>`: ''}${hasSubtasks ? subtaskIndicatorHtml : ''}</div> ${completedAtHtml} </div></div><div class="flex items-center flex-shrink-0 ml-2"><button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="edit-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button class="delete-btn text-gray-500 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div><div class="details-container px-4"><div class="notes-container border-t pt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><textarea class="task-notes-textarea" placeholder="Click to add notes...">${task.notes || ''}</textarea></div><div class="subtask-container border-t pt-4 mt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Subtasks ${subtaskProgress}</h4><div class="space-y-2">${subtasksHtml}<div class="grid grid-cols-3 gap-2 pt-2"><input type="text" class="new-subtask-input col-span-2 bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="New subtask..."><input type="date" class="new-subtask-date-input bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500"><button class="add-subtask-btn col-span-3 mt-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 rounded">Add Subtask</button></div></div></div></div><div class="subtask-alert text-red-500 text-xs font-bold mt-2 px-4 pb-2 hidden"></div></li>`; }
+        function createTaskElement(task) { 
+            const taskDateTime = new Date(`${task.date}T${task.time || '23:59:59'}`); 
+            let timeDiffHtml = !task.completed ? `<span class="relative-time" data-datetime="${taskDateTime.toISOString()}"></span>` : ''; 
+            const completedAtHtml = task.completed && task.completedAt ? `<div class="completion-timestamp text-green-600 font-semibold mt-1 text-xs flex items-center gap-1 pl-8"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Completed: ${new Date(task.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${formatTo12Hour(new Date(task.completedAt).toTimeString())}</span></div>` : ''; 
+            
+            const subtasksHtml = (task.subtasks || []).map((sub, index) => `<div class="flex items-center justify-between gap-2 ml-4"><div class="flex items-start gap-2 flex-1"><input type="checkbox" id="subtask-${task.id}-${index}" data-subtask-index="${index}" class="subtask-checkbox h-4 w-4 mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${sub.completed ? 'checked' : ''}><div class="flex-1"><label for="subtask-${task.id}-${index}" class="text-sm ${sub.completed ? 'completed task-title-completed' : ''}">${sub.text}</label>${sub.completed && sub.completedAt ? `<div class="text-xs text-gray-400 completion-timestamp">Completed: ${new Date(sub.completedAt).toLocaleDateString('en-US', {month:'short',day:'numeric'})} at ${formatTo12Hour(new Date(sub.completedAt).toTimeString())}</div>` : ''}</div></div><div class="flex-shrink-0"><button class="edit-subtask-btn p-1 rounded-full hover:bg-gray-200" data-task-id="${task.id}" data-subtask-index="${index}"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button class="delete-subtask-btn p-1 rounded-full hover:bg-gray-200" data-task-id="${task.id}" data-subtask-index="${index}"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div>`).join(''); 
+            
+            const subtaskProgress = task.subtasks && task.subtasks.length > 0 ? `(${task.subtasks.filter(s=>s.completed).length}/${task.subtasks.length})` : ''; 
+            const categoryClass = categoryMap[task.category].color || categoryMap['Other'].color; 
+            const hasNotes = task.notes && task.notes.trim() !== ''; 
+            const hasSubtasks = task.subtasks && task.subtasks.length > 0; 
+            const noteSnippet = hasNotes ? task.notes.substring(0, 40) + (task.notes.length > 40 ? '...' : '') : ''; 
+            const subtaskIndicatorHtml = hasSubtasks ? `<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>` : ''; 
+            
+            // Conditional Edit History Button in List View
+            const editHistoryButton = (task.history && task.history.length > 0) 
+                ? `<button class="show-history-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit History" data-task-id="${task.id}"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 12m15.356 2H18.5V10m-1.42 6.5l-3.21 3.21a2 2 0 01-2.83 0l-3.2-3.21m8.88-8.88l-3.21-3.21a2 2 0 00-2.83 0l-3.2 3.21"></path></svg></button>`
+                : '';
+
+            return `<li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" data-datetime="${taskDateTime.toISOString()}"><div class="flex items-start justify-between p-4"><div class="flex items-start gap-3 flex-grow min-w-0"><input type="checkbox" class="task-checkbox h-5 w-5 rounded border-gray-300 text-indigo-600 flex-shrink-0 mt-1 focus:ring-indigo-500" ${task.completed ? 'checked' : ''}><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span><span class="flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-full ${categoryClass}">${categoryMap[task.category].icon} ${task.category}</span><span class="font-medium break-words ${task.completed ? 'task-title-completed' : ''}">${task.text}</span></div><div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${task.completed ? 'completed' : ''}"><span>${taskDateTime.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} ${formatTo12Hour(task.time)}</span>${!task.completed ? `<span class="mx-1">•</span> ${timeDiffHtml}` : ''}${hasNotes ? `<div class="flex items-center gap-1 text-gray-400" title="${task.notes}"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg><span class="truncate italic">${noteSnippet}</span></div>`: ''}${hasSubtasks ? subtaskIndicatorHtml : ''}</div> ${completedAtHtml} </div></div><div class="flex items-center flex-shrink-0 ml-2">${editHistoryButton}<button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="edit-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button class="delete-btn text-gray-500 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div><div class="details-container px-4"><div class="notes-container border-t pt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><textarea class="task-notes-textarea" placeholder="Click to add notes...">${task.notes || ''}</textarea></div><div class="subtask-container border-t pt-4 mt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Subtasks ${subtaskProgress}</h4><div class="space-y-2">${subtasksHtml}<div class="grid grid-cols-3 gap-2 pt-2"><input type="text" class="new-subtask-input col-span-2 bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="New subtask..."><input type="date" class="new-subtask-date-input bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500"><button class="add-subtask-btn col-span-3 mt-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 rounded">Add Subtask</button></div></div></div></div><div class="subtask-alert text-red-500 text-xs font-bold mt-2 px-4 pb-2 hidden"></div></li>`; }
         function renderKanbanView(tasks) { DOMElements.kanbanBoard.innerHTML = '<p class="text-center text-sm text-gray-500 mb-4 col-span-full">Drag and drop tasks to change their category.</p>'; const columns = { 'Personal': [], 'Work': [], 'School': [], 'Other': [] }; tasks.forEach(task => { if (columns[task.category]) { columns[task.category].push(task); }}); for (const category in columns) { const columnEl = document.createElement('div'); columnEl.className = 'kanban-column'; columnEl.dataset.category = category; columnEl.innerHTML = `<h3 class="kanban-column-title">${categoryMap[category].icon} ${category}</h3><div class="kanban-tasks"></div>`; const tasksContainer = columnEl.querySelector('.kanban-tasks'); columns[category].forEach(task => { const cardEl = document.createElement('div'); cardEl.className = 'kanban-card'; cardEl.dataset.id = task.id; cardEl.draggable = true; cardEl.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5 text-gray-400 cursor-grab flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg><span class="flex-grow">${task.text}</span></div>`; tasksContainer.appendChild(cardEl); }); DOMElements.kanbanBoard.appendChild(columnEl); } }
 
         // --- CALENDAR VIEW LOGIC ---
@@ -336,15 +418,13 @@
             return { priorityFlag, categoryBadge, timeDisplay };
         }
 
-        // Updated renderCalendarView to apply pulsing to the day box
+        // Updated renderCalendarView to apply urgency classes to the day box
         function renderCalendarView() { 
             const m = currentCalendarDate.getMonth(), y = currentCalendarDate.getFullYear(); 
             DOMElements.calendarGrid.innerHTML = ''; 
             DOMElements.calendarMonthYear.textContent = new Date(y, m).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); 
             const firstDay = new Date(y, m, 1).getDay(), daysInMonth = new Date(y, m + 1, 0).getDate(); 
             const filteredTasks = getFilteredTasks();
-            const now = new Date();
-            const todayString = now.toISOString().split('T')[0];
             
             for (let i = 0; i < firstDay; i++) DOMElements.calendarGrid.insertAdjacentHTML('beforeend', `<div class="calendar-day other-month"></div>`); 
             
@@ -357,23 +437,11 @@
                 const today = new Date(); 
                 if (d === today.getDate() && m === today.getMonth() && y === today.getFullYear()) dayEl.classList.add('is-today'); 
                 
-                // Get tasks for the current day
+                // Get tasks for the current day to place dots and initialize urgency classes
                 const tasksOnDay = filteredTasks.filter(t => t.date === dateString);
 
-                // Check for urgency and apply class to the day box
-                const overdueTask = tasksOnDay.some(t => !t.completed && new Date(`${t.date}T${t.time || '23:59:59'}`) < now);
-                const dueSoonTask = tasksOnDay.some(t => {
-                    if (t.completed) return false;
-                    const taskDateTime = new Date(`${t.date}T${t.time || '23:59:59'}`);
-                    const diffHours = (taskDateTime.getTime() - now.getTime()) / 3600000;
-                    return diffHours > 0 && diffHours <= 1; // Due soon (within 1 hour)
-                });
-                
-                if (overdueTask) {
-                    dayEl.classList.add('pulse-overdue');
-                } else if (dueSoonTask) {
-                    dayEl.classList.add('pulse-due-soon');
-                }
+                // This initial class setup is redundant but safe since updateDynamicElements runs right after refreshDynamicContent
+                // We rely on updateDynamicElements to apply/remove the pulsing effects every 15s.
 
                 const headerEl = document.createElement('div'); 
                 headerEl.className = 'calendar-day-header'; 
@@ -390,7 +458,7 @@
             }
         }
 
-        // Updated to use a Modal instead of an inline panel
+        // Updated to use the Modal Pop-up
         function handleCalendarDayClick(e) { 
             const dayEl = e.target.closest('.calendar-day:not(.other-month)'); 
             if (!dayEl) return; 
@@ -403,7 +471,6 @@
                 .sort((a, b) => (new Date(`${a.date}T${a.time || '23:59:59'}`) - new Date(`${b.date}T${b.time || '23:59:59'}`)));
 
             DOMElements.calendarModalTitle.textContent = `Tasks for ${date.toLocaleDateString('en-US', { dateStyle: 'full' })}`; 
-            
             DOMElements.calendarModalTasks.innerHTML = tasks.length 
                 ? tasks.map(t => {
                     const { priorityFlag, categoryBadge, timeDisplay } = getTaskSummaryBadges(t);
@@ -421,6 +488,9 @@
                         }
                     }
 
+                    // Reusing logic from the task list item for details dropdown
+                    const notesHtml = t.notes ? `<div class="notes-container pt-4 border-t"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><p class="text-sm text-gray-700 whitespace-pre-wrap">${t.notes}</p></div>` : '';
+                    
                     return `
                         <div class="calendar-task-item p-3 ${t.completed ? 'completed opacity-90' : 'bg-white'} flex flex-col gap-2 shadow-sm border border-gray-100 ${urgencyClasses}" data-id="${t.id}" data-datetime="${taskDateTime.toISOString()}">
                             <div class="flex items-start justify-between">
@@ -441,10 +511,7 @@
                                 <button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
                             </div>
                             <div class="details-container px-4">
-                                <div class="notes-container pt-4 border-t">
-                                    <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4>
-                                    <p class="text-sm text-gray-700 whitespace-pre-wrap">${t.notes || 'No notes added.'}</p>
-                                </div>
+                                ${notesHtml}
                             </div>
                         </div>
                     `;
@@ -458,6 +525,28 @@
             updateDynamicElements(); // Apply pulsing urgency colors for tasks inside the modal
         }
         // --- END CALENDAR VIEW LOGIC ---
+
+        function showHistoryModal(taskId) {
+            const task = allTasks.find(t => t.id === taskId);
+            if (!task || !task.history || task.history.length === 0) return;
+
+            DOMElements.historyModalContent.innerHTML = task.history.map(entry => {
+                const timestamp = new Date(entry.timestamp).toLocaleString();
+                const changeDetails = entry.changes.map(change => 
+                    `<li class="text-sm text-gray-700 ml-4">• <span class="font-semibold">${change.field}:</span> from <span class="text-red-500">${change.oldValue}</span> to <span class="text-green-600">${change.newValue}</span></li>`
+                ).join('');
+
+                return `
+                    <div class="border p-3 rounded-lg bg-gray-50">
+                        <p class="font-bold text-gray-800">${entry.action || 'Edited'}</p>
+                        <p class="text-xs text-gray-500 mb-2">${timestamp}</p>
+                        <ul class="space-y-1">${changeDetails}</ul>
+                    </div>
+                `;
+            }).join('');
+
+            DOMElements.historyModal.classList.remove('hidden');
+        }
 
 
         function setupEventListeners() { 
@@ -502,6 +591,11 @@
             }); 
             DOMElements.cancelEditBtn.addEventListener('click', hideEditModal); 
             DOMElements.editTaskForm.addEventListener('submit', handleEditTask); 
+
+            // History Button Listeners
+            DOMElements.editHistoryBtn.addEventListener('click', () => showHistoryModal(taskToEditId));
+            DOMElements.historyModalCloseBtn.addEventListener('click', () => DOMElements.historyModal.classList.add('hidden'));
+
             DOMElements.prevMonthBtn.addEventListener('click', () => { 
                 currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); 
                 renderCalendarView(); 
@@ -548,20 +642,17 @@
                 } 
             }); 
             document.addEventListener('click', (e) => { 
-                // Close Today Panel on outside click
+                // Close panels on outside click
                 if (!DOMElements.headerTodayBtn.contains(e.target) && !DOMElements.todayPanel.contains(e.target)) { 
                     DOMElements.todayPanel.classList.add('hidden'); 
                 } 
-                // Close Logout Panel on outside click
                 if (!DOMElements.headerLogoutBtn.contains(e.target) && !DOMElements.logoutPanel.contains(e.target)) {
                     DOMElements.logoutPanel.classList.add('hidden');
                 }
             }); 
         }
 
-        // IMPORTANT: Updated attachDynamicListeners to handle elements inside the Calendar Modal too.
         function attachDynamicListeners(container) { 
-            // Select both list view items and calendar modal items
             container.querySelectorAll('li.task-item, .calendar-task-item').forEach(taskItem => {
                 const taskId = taskItem.dataset.id;
                 
@@ -602,6 +693,7 @@
                 // Edit/Delete buttons (only visible in List View)
                 taskItem.querySelector('.edit-btn')?.addEventListener('click', () => showEditModal(taskId));
                 taskItem.querySelector('.delete-btn')?.addEventListener('click', () => showConfirmModal(taskId));
+                taskItem.querySelector('.show-history-btn')?.addEventListener('click', () => showHistoryModal(taskId));
 
                 // Subtask/Notes logic (only present in List View's full details-container)
                 const notesTextarea = taskItem.querySelector('.task-notes-textarea');
@@ -641,15 +733,18 @@
                     completedAt: null, 
                     tags: parseTags(addTaskTags.value), 
                     recurrence: addTaskRepeat.value, 
+                    history: [] // Initialize history on creation
                 }); 
                 hideAddTaskModal(); 
             } 
         }
+
         async function handleEditTask(e) { 
             e.preventDefault(); 
             const task = allTasks.find(t => t.id === taskToEditId); 
             if (task) { 
-                await crudOperation('update', { 
+                // Prepare new task data, crudOperation will handle history logging inside
+                const newTaskData = { 
                     ...task, 
                     id: taskToEditId, 
                     text: DOMElements.editTaskText.value, 
@@ -659,10 +754,36 @@
                     priority: DOMElements.editTaskPriority.value, 
                     notes: DOMElements.editTaskNotes.value, 
                     tags: parseTags(DOMElements.editTaskTags.value) 
-                }); 
+                };
+
+                await crudOperation('update', newTaskData); 
                 hideEditModal(); 
             } 
         }
+
+        function showEditModal(taskId) { 
+            taskToEditId = taskId; 
+            const task = allTasks.find(t => t.id === taskId); 
+            if(task) { 
+                DOMElements.editTaskText.value = task.text; 
+                DOMElements.editTaskDate.value = task.date; 
+                DOMElements.editTaskTime.value = task.time || ''; 
+                DOMElements.editTaskCategory.value = task.category; 
+                DOMElements.editTaskPriority.value = task.priority || 'medium'; 
+                DOMElements.editTaskNotes.value = task.notes || ''; 
+                DOMElements.editTaskTags.value = task.tags ? task.tags.join(', ') : ''; 
+                
+                // Conditional display of history button
+                if (task.history && task.history.length > 0) {
+                    DOMElements.editHistoryBtn.classList.remove('hidden');
+                } else {
+                    DOMElements.editHistoryBtn.classList.add('hidden');
+                }
+                
+                DOMElements.editModal.classList.remove('hidden'); 
+            } 
+        }
+        
         function handleCategoryFilter(e) { const target = e.target.closest('.category-filter-btn'); if (target) { currentCategoryFilter = target.dataset.category; styleCategoryFilters(); refreshDynamicContent(); } }
         function handleAddSubtask(taskId, text, dueDate) { const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtask = { text, completed: false, completedAt: null, dueDate: dueDate || null }; crudOperation('update', { id: taskId, subtasks: [...(task.subtasks || []), newSubtask] }); } }
         function handleSubtaskToggle(taskId, subtaskIndex) { const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtasks = task.subtasks.map((sub, i) => { if (i === subtaskIndex) { const isCompleted = !sub.completed; return { ...sub, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null }; } return sub; }); crudOperation('update', { id: taskId, subtasks: newSubtasks }); } }
@@ -706,7 +827,6 @@
         }
         function showAddTaskModal() { DOMElements.addTaskForm.reset(); setSmartDefaults(); DOMElements.addTaskModal.classList.remove('hidden'); DOMElements.addTaskText.focus(); }
         function hideAddTaskModal() { DOMElements.addTaskModal.classList.add('hidden'); }
-        function showEditModal(taskId) { taskToEditId = taskId; const task = allTasks.find(t => t.id === taskId); if(task) { DOMElements.editTaskText.value = task.text; DOMElements.editTaskDate.value = task.date; DOMElements.editTaskTime.value = task.time || ''; DOMElements.editTaskCategory.value = task.category; DOMElements.editTaskPriority.value = task.priority || 'medium'; DOMElements.editTaskNotes.value = task.notes || ''; DOMElements.editTaskTags.value = task.tags ? task.tags.join(', ') : ''; DOMElements.editModal.classList.remove('hidden'); } }
         function hideEditModal() { DOMElements.editModal.classList.add('hidden'); taskToEditId = null; }
         function showConfirmModal(taskId) { taskToDeleteId = taskId; DOMElements.confirmModal.classList.remove('hidden'); }
         function hideConfirmModal() { taskToDeleteId = null; DOMElements.confirmModal.classList.add('hidden'); }
@@ -714,12 +834,12 @@
         function getInitials(email) { if (!email) return '?'; const p = email.split('@')[0].split(/[._-]/); return p.length > 1 ? (p[0][0] + p[1][0]) : email[0]; }
         function formatTo12Hour(timeString) { if (!timeString) return ''; const date = new Date(); const [hour, minute] = timeString.split(':'); date.setHours(hour, minute); return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); }
         
-        // IMPORTANT: Updated updateDynamicElements to check list items, calendar day boxes, and calendar modal items
+        // IMPORTANT: Updated updateDynamicElements to correctly apply pulsing effects.
         function updateDynamicElements() { 
             const now = new Date();
             
-            // Update urgency for List View tasks
-            document.querySelectorAll('.task-item:not(.completed)').forEach(el => { 
+            // 1. Update urgency for List View tasks and Calendar Modal tasks
+            document.querySelectorAll('.task-item:not(.completed), .calendar-task-item:not(.completed)').forEach(el => { 
                 const isoDate = el.dataset.datetime; 
                 if (isoDate) { 
                     const taskDateTime = new Date(isoDate); 
@@ -733,14 +853,14 @@
                 } 
             }); 
             
-            // Update urgency for Calendar Day Boxes (only if not already applied in renderCalendarView, 
-            // but this ensures the pulse continues without a full re-render)
+            // 2. Update urgency for Calendar Day Boxes
             document.querySelectorAll('.calendar-day:not(.other-month)').forEach(dayEl => {
                 const dateString = dayEl.dataset.date;
                 if (!dateString) return;
 
                 const tasksOnDay = allTasks.filter(t => t.date === dateString && !t.completed);
                 
+                // Remove previous pulse classes to prevent stacking animation
                 dayEl.classList.remove('pulse-overdue', 'pulse-due-soon'); 
 
                 const overdueTask = tasksOnDay.some(t => new Date(`${t.date}T${t.time || '23:59:59'}`) < now);
@@ -757,23 +877,7 @@
                 }
             });
 
-            // Update urgency for tasks inside the Calendar Modal
-            document.querySelectorAll('.calendar-modal-tasks .calendar-task-item:not(.completed)').forEach(el => {
-                const isoDate = el.dataset.datetime; 
-                if (isoDate) { 
-                    const taskDateTime = new Date(isoDate); 
-                    const diffHours = (taskDateTime.getTime() - now.getTime()) / 3600000; 
-                    el.classList.remove('pulse-overdue', 'pulse-due-soon'); 
-                    if (diffHours < 0) { 
-                        el.classList.add('pulse-overdue'); 
-                    } else if (diffHours <= 1 && diffHours >= 0) {
-                        el.classList.add('pulse-due-soon'); 
-                    } 
-                } 
-            });
-
-
-            // Update relative times everywhere
+            // 3. Update relative times everywhere
             document.querySelectorAll('.relative-time').forEach(el => { 
                 const isoDate = el.dataset.datetime; 
                 if (isoDate) { 
