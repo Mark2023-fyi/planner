@@ -33,7 +33,7 @@
             display: flex; 
             flex-direction: column; 
             position: relative; 
-            box-sizing: border-box; /* Ensure padding/border are included in the element's total width and height */
+            box-sizing: border-box;
         }
         .calendar-day:not(.other-month):hover { background-color: #eff6ff; }
         .calendar-day.other-month { background-color: #f9fafb; color: #d1d5db; cursor: default; }
@@ -87,6 +87,13 @@
         .calendar-task-item { background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .calendar-task-item.completed { opacity: 0.7; }
         .calendar-task-item:not(:last-child) { margin-bottom: 0.75rem; }
+
+        /* History Modal Specific Styles */
+        .history-card { border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #f9fafb; padding: 1rem; }
+        .history-change { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 0.25rem 0; border-bottom: 1px dotted #e5e7eb; }
+        .history-change:last-child { border-bottom: none; }
+        .history-old { color: #ef4444; }
+        .history-new { color: #10b981; }
     </style>
 </head>
 <body class="antialiased">
@@ -99,7 +106,7 @@
     </div>
 
     <div id="add-task-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Add New Task</h3><form id="add-task-form" class="space-y-4"><div class="relative"><input type="text" id="add-task-text" placeholder="What do you need to do?" class="w-full bg-gray-100 rounded-lg pl-4 pr-12 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><button type="button" id="generate-subtasks-btn" title="✨ Generate Subtasks with AI" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-9l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L12.707 10l-1.414 1.414a1 1 0 01-1.414 0L7.586 9.121a1 1 0 010-1.414L8.293 7a1 1 0 011.414 0L12 9.293l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L13.414 12l1.414 1.414a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414 0L12 13.414l-2.293 2.293a1 1 0 01-1.414 0l-.707-.707a1 1 0 010-1.414L10.586 12 9.172 10.586a1 1 0 010-1.414l.707-.707a1 1 0 011.414 0L12 8.586z" /></svg></button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="add-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="add-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low Priority</option><option value="medium" selected>Medium Priority</option><option value="high">High Priority</option></select><select id="add-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option><option value="Work">Work</option><option value="School">School</option><option value="Other">Other</option></select></div><div><label for="add-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="add-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-repeat" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><div><label for="add-task-reminder" class="block mb-1 text-sm font-medium text-gray-600">Reminder</label><select id="add-task-reminder" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">No reminder</option><option value="5">5 minutes before</option><option value="15">15 minutes before</option><option value="60">1 hour before</option></select><div id="add-email-toggle-container" class="hidden mt-2 pl-2"><label class="flex items-center space-x-2"><input type="checkbox" id="add-task-email-toggle" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="text-sm text-gray-600">Also send an email reminder?</span></label></div></div></div><div id="generated-subtasks-container" class="hidden space-y-2 pt-2 max-h-32 overflow-y-auto"><h4 class="text-sm font-bold text-gray-600">✨ AI Generated Subtasks:</h4><ul id="generated-subtasks-list" class="space-y-1 text-sm text-gray-700"></ul></div><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-add-task-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Add Task</button></div></form></div></div>
-    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-between gap-4 pt-4"><button type="button" id="edit-history-btn" class="hidden bg-gray-100 hover:bg-gray-200 text-sm font-bold py-2 px-4 rounded-lg">Edit History</button><div class="flex gap-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></div></form></div></div>
+    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-between gap-4 pt-4"><button type="button" id="edit-history-btn" class="hidden bg-gray-100 hover:bg-gray-200 text-sm font-bold py-2 px-4 rounded-lg flex items-center gap-1"><svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Edit History</button><div class="flex gap-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></div></form></div></div>
     <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-4">Confirm Deletion</h3><p class="text-gray-600 mb-6">This action cannot be undone.</p><div class="flex justify-center gap-4"><button id="cancel-delete-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button id="confirm-delete-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button></div></div></div>
     <div id="calendar-day-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full"><h3 id="calendar-modal-title" class="text-xl font-bold mb-4 text-gray-800"></h3><div id="calendar-modal-tasks" class="space-y-2 max-h-80 overflow-y-auto"></div><div class="text-right mt-6"><button id="calendar-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button></div></div></div>
     <div id="history-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal">
@@ -268,17 +275,23 @@
             DOMElements.loader.classList.add('hidden');
         });
 
-        async function loadTasks(userId) { isInitialLoad = true; refreshDynamicContent(); const tasksCollection = collection(db, "users", userId, "tasks"); if (unsubscribeTasks) unsubscribeTasks(); unsubscribeTasks = onSnapshot(query(tasksCollection, orderBy("date", "desc")), snapshot => { 
-            // Ensure 'history' property exists on all tasks for safety
-            allTasks = snapshot.docs.map(doc => ({ 
-                id: doc.id, 
-                ...doc.data(), 
-                subtasks: doc.data().subtasks || [], 
-                notes: doc.data().notes || '',
-                history: doc.data().history || [] // Initialize history array
-            })); 
-            if (isInitialLoad) { isInitialLoad = false; } refreshDynamicContent(); 
-        }); }
+        async function loadTasks(userId) { 
+            isInitialLoad = true; 
+            refreshDynamicContent(); 
+            const tasksCollection = collection(db, "users", userId, "tasks"); 
+            if (unsubscribeTasks) unsubscribeTasks(); 
+            unsubscribeTasks = onSnapshot(query(tasksCollection, orderBy("date", "desc")), snapshot => { 
+                // Ensure 'history' property exists on all tasks for safety
+                allTasks = snapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data(), 
+                    subtasks: doc.data().subtasks || [], 
+                    notes: doc.data().notes || '',
+                    history: doc.data().history || [] // Initialize history array
+                })); 
+                if (isInitialLoad) { isInitialLoad = false; } refreshDynamicContent(); 
+            }); 
+        }
         
         // Helper to find differences for history logging
         function getChanges(oldTask, newTask) {
@@ -286,11 +299,19 @@
             const fields = ['text', 'date', 'time', 'priority', 'category'];
             
             fields.forEach(field => {
-                const oldValue = oldTask[field] || 'N/A';
-                const newValue = newTask[field] || 'N/A';
+                const oldValue = oldTask[field] || 'None';
+                const newValue = newTask[field] || 'None';
                 
-                if (oldValue !== newValue) {
-                    changes.push({ field, oldValue, newValue });
+                // Special handling for time format display
+                let oldDisplay = field === 'time' && oldValue !== 'None' ? formatTo12Hour(oldValue) : oldValue;
+                let newDisplay = field === 'time' && newValue !== 'None' ? formatTo12Hour(newValue) : newValue;
+
+                if (oldValue !== newValue && newValue !== undefined) {
+                    changes.push({ 
+                        field: field.charAt(0).toUpperCase() + field.slice(1), 
+                        oldValue: oldDisplay, 
+                        newValue: newDisplay 
+                    });
                 }
             });
             return changes;
@@ -304,24 +325,26 @@
             // Handle Edit History Logging
             if (action === 'update') {
                 const oldTask = allTasks.find(t => t.id === id);
-                const changes = getChanges(oldTask, payload);
-
-                if (changes.length > 0) {
-                    const newHistoryEntry = {
-                        timestamp: new Date().toISOString(),
-                        changes: changes,
-                        action: 'Edited'
-                    };
-                    
-                    // Add new entry to existing history or create a new one
-                    payload.history = [...(oldTask.history || []), newHistoryEntry];
+                // Only log history if we are updating a saved task AND it's not just a completion toggle
+                if (oldTask && payload.completed === undefined) { 
+                    const changes = getChanges(oldTask, payload);
+                    if (changes.length > 0) {
+                        const newHistoryEntry = {
+                            timestamp: new Date().toISOString(),
+                            changes: changes,
+                            action: 'Edited'
+                        };
+                        
+                        // Pass back the new history array to be saved
+                        payload.history = [...(oldTask.history || []), newHistoryEntry];
+                    }
                 }
             }
 
             showIndicator("Saving...", "info", true); 
             
             try { 
-                if (action === 'add') await addDoc(collection(db, "users", user.uid, "tasks"), payload); 
+                if (action === 'add') await addDoc(collection(db, "users", user.uid, "tasks"), { ...payload, history: [] }); // Ensure history is initialized for new tasks
                 else if (action === 'update') await updateDoc(doc(db, "users", user.uid, "tasks", id), payload); 
                 else if (action === 'delete') await deleteDoc(doc(db, "users", user.uid, "tasks", id)); 
                 
@@ -400,12 +423,15 @@
             const noteSnippet = hasNotes ? task.notes.substring(0, 40) + (task.notes.length > 40 ? '...' : '') : ''; 
             const subtaskIndicatorHtml = hasSubtasks ? `<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>` : ''; 
             
-            // Conditional Edit History Button in List View
+            // NEW: Reminder indicator
+            const reminderIndicator = task.reminder && task.reminder !== 'none' ? `<svg class="w-4 h-4 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Reminder set"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1"></path></svg>` : '';
+
+            // Conditional Edit History Button
             const editHistoryButton = (task.history && task.history.length > 0) 
-                ? `<button class="show-history-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit History" data-task-id="${task.id}"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 12m15.356 2H18.5V10m-1.42 6.5l-3.21 3.21a2 2 0 01-2.83 0l-3.2-3.21m8.88-8.88l-3.21-3.21a2 2 0 00-2.83 0l-3.2 3.21"></path></svg></button>`
+                ? `<button class="show-history-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit History" data-task-id="${task.id}"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>`
                 : '';
 
-            return `<li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" data-datetime="${taskDateTime.toISOString()}"><div class="flex items-start justify-between p-4"><div class="flex items-start gap-3 flex-grow min-w-0"><input type="checkbox" class="task-checkbox h-5 w-5 rounded border-gray-300 text-indigo-600 flex-shrink-0 mt-1 focus:ring-indigo-500" ${task.completed ? 'checked' : ''}><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span><span class="flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-full ${categoryClass}">${categoryMap[task.category].icon} ${task.category}</span><span class="font-medium break-words ${task.completed ? 'task-title-completed' : ''}">${task.text}</span></div><div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${task.completed ? 'completed' : ''}"><span>${taskDateTime.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} ${formatTo12Hour(task.time)}</span>${!task.completed ? `<span class="mx-1">•</span> ${timeDiffHtml}` : ''}${hasNotes ? `<div class="flex items-center gap-1 text-gray-400" title="${task.notes}"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg><span class="truncate italic">${noteSnippet}</span></div>`: ''}${hasSubtasks ? subtaskIndicatorHtml : ''}</div> ${completedAtHtml} </div></div><div class="flex items-center flex-shrink-0 ml-2">${editHistoryButton}<button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="edit-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button class="delete-btn text-gray-500 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div><div class="details-container px-4"><div class="notes-container border-t pt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><textarea class="task-notes-textarea" placeholder="Click to add notes...">${task.notes || ''}</textarea></div><div class="subtask-container border-t pt-4 mt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Subtasks ${subtaskProgress}</h4><div class="space-y-2">${subtasksHtml}<div class="grid grid-cols-3 gap-2 pt-2"><input type="text" class="new-subtask-input col-span-2 bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="New subtask..."><input type="date" class="new-subtask-date-input bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500"><button class="add-subtask-btn col-span-3 mt-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 rounded">Add Subtask</button></div></div></div></div><div class="subtask-alert text-red-500 text-xs font-bold mt-2 px-4 pb-2 hidden"></div></li>`; }
+            return `<li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" data-datetime="${taskDateTime.toISOString()}"><div class="flex items-start justify-between p-4"><div class="flex items-start gap-3 flex-grow min-w-0"><input type="checkbox" class="task-checkbox h-5 w-5 rounded border-gray-300 text-indigo-600 flex-shrink-0 mt-1 focus:ring-indigo-500" ${task.completed ? 'checked' : ''}><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span><span class="flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-full ${categoryClass}">${categoryMap[task.category].icon} ${task.category}</span>${reminderIndicator}<span class="font-medium break-words ${task.completed ? 'task-title-completed' : ''}">${task.text}</span></div><div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${task.completed ? 'completed' : ''}"><span>${taskDateTime.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} ${formatTo12Hour(task.time)}</span>${!task.completed ? `<span class="mx-1">•</span> ${timeDiffHtml}` : ''}${hasNotes ? `<div class="flex items-center gap-1 text-gray-400" title="${task.notes}"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg><span class="truncate italic">${noteSnippet}</span></div>`: ''}${hasSubtasks ? subtaskIndicatorHtml : ''}</div> ${completedAtHtml} </div></div><div class="flex items-center flex-shrink-0 ml-2">${editHistoryButton}<button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="edit-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button class="delete-btn text-gray-500 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div><div class="details-container px-4"><div class="notes-container border-t pt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><textarea class="task-notes-textarea" placeholder="Click to add notes...">${task.notes || ''}</textarea></div><div class="subtask-container border-t pt-4 mt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Subtasks ${subtaskProgress}</h4><div class="space-y-2">${subtasksHtml}<div class="grid grid-cols-3 gap-2 pt-2"><input type="text" class="new-subtask-input col-span-2 bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="New subtask..."><input type="date" class="new-subtask-date-input bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500"><button class="add-subtask-btn col-span-3 mt-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 rounded">Add Subtask</button></div></div></div></div><div class="subtask-alert text-red-500 text-xs font-bold mt-2 px-4 pb-2 hidden"></div></li>`; }
         function renderKanbanView(tasks) { DOMElements.kanbanBoard.innerHTML = '<p class="text-center text-sm text-gray-500 mb-4 col-span-full">Drag and drop tasks to change their category.</p>'; const columns = { 'Personal': [], 'Work': [], 'School': [], 'Other': [] }; tasks.forEach(task => { if (columns[task.category]) { columns[task.category].push(task); }}); for (const category in columns) { const columnEl = document.createElement('div'); columnEl.className = 'kanban-column'; columnEl.dataset.category = category; columnEl.innerHTML = `<h3 class="kanban-column-title">${categoryMap[category].icon} ${category}</h3><div class="kanban-tasks"></div>`; const tasksContainer = columnEl.querySelector('.kanban-tasks'); columns[category].forEach(task => { const cardEl = document.createElement('div'); cardEl.className = 'kanban-card'; cardEl.dataset.id = task.id; cardEl.draggable = true; cardEl.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5 text-gray-400 cursor-grab flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg><span class="flex-grow">${task.text}</span></div>`; tasksContainer.appendChild(cardEl); }); DOMElements.kanbanBoard.appendChild(columnEl); } }
 
         // --- CALENDAR VIEW LOGIC ---
@@ -414,8 +440,9 @@
             const priorityFlag = `<span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span>`;
             const categoryBadge = `<span class="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${categoryMap[task.category]?.color || categoryMap['Other'].color}">${categoryMap[task.category]?.icon || categoryMap['Other'].icon} ${task.category}</span>`;
             const timeDisplay = task.time ? `<span class="text-gray-500 text-xs">${formatTo12Hour(task.time)}</span>` : '';
+            const reminderIndicator = task.reminder && task.reminder !== 'none' ? `<svg class="w-4 h-4 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Reminder set"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1"></path></svg>` : '';
 
-            return { priorityFlag, categoryBadge, timeDisplay };
+            return { priorityFlag, categoryBadge, timeDisplay, reminderIndicator };
         }
 
         // Updated renderCalendarView to apply urgency classes to the day box
@@ -437,11 +464,7 @@
                 const today = new Date(); 
                 if (d === today.getDate() && m === today.getMonth() && y === today.getFullYear()) dayEl.classList.add('is-today'); 
                 
-                // Get tasks for the current day to place dots and initialize urgency classes
                 const tasksOnDay = filteredTasks.filter(t => t.date === dateString);
-
-                // This initial class setup is redundant but safe since updateDynamicElements runs right after refreshDynamicContent
-                // We rely on updateDynamicElements to apply/remove the pulsing effects every 15s.
 
                 const headerEl = document.createElement('div'); 
                 headerEl.className = 'calendar-day-header'; 
@@ -473,7 +496,7 @@
             DOMElements.calendarModalTitle.textContent = `Tasks for ${date.toLocaleDateString('en-US', { dateStyle: 'full' })}`; 
             DOMElements.calendarModalTasks.innerHTML = tasks.length 
                 ? tasks.map(t => {
-                    const { priorityFlag, categoryBadge, timeDisplay } = getTaskSummaryBadges(t);
+                    const { priorityFlag, categoryBadge, timeDisplay, reminderIndicator } = getTaskSummaryBadges(t);
                     const taskDateTime = new Date(`${t.date}T${t.time || '23:59:59'}`);
                     
                     // Determine task urgency classes for pulsing inside the modal
@@ -488,7 +511,12 @@
                         }
                     }
 
-                    // Reusing logic from the task list item for details dropdown
+                    // Conditional Edit History Button
+                    const editHistoryButton = (t.history && t.history.length > 0) 
+                        ? `<button class="show-history-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit History" data-task-id="${t.id}"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>`
+                        : '';
+
+                    // Notes/Details HTML
                     const notesHtml = t.notes ? `<div class="notes-container pt-4 border-t"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><p class="text-sm text-gray-700 whitespace-pre-wrap">${t.notes}</p></div>` : '';
                     
                     return `
@@ -500,6 +528,7 @@
                                         <div class="flex items-center gap-2 flex-wrap">
                                             ${priorityFlag}
                                             ${categoryBadge}
+                                            ${reminderIndicator}
                                             <span class="font-medium break-words ${t.completed ? 'task-title-completed text-gray-500' : 'text-gray-800'}">${t.text}</span>
                                         </div>
                                         <div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${t.completed ? 'completed' : ''}">
@@ -508,7 +537,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                <div class="flex items-center flex-shrink-0 ml-2">
+                                    ${editHistoryButton}
+                                    <button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                </div>
                             </div>
                             <div class="details-container px-4">
                                 ${notesHtml}
@@ -526,28 +558,92 @@
         }
         // --- END CALENDAR VIEW LOGIC ---
 
+        // --- NEW showHistoryModal function implementation (Updated Layout) ---
         function showHistoryModal(taskId) {
             const task = allTasks.find(t => t.id === taskId);
-            if (!task || !task.history || task.history.length === 0) return;
+            const historyContent = DOMElements.historyModalContent;
+            
+            if (!task || !task.history || task.history.length === 0) {
+                 historyContent.innerHTML = '<p class="text-gray-500">No edit history recorded for this task.</p>';
+            } else {
+                // Reverse the array to show most recent changes first
+                const reversedHistory = [...task.history].reverse();
 
-            DOMElements.historyModalContent.innerHTML = task.history.map(entry => {
-                const timestamp = new Date(entry.timestamp).toLocaleString();
-                const changeDetails = entry.changes.map(change => 
-                    `<li class="text-sm text-gray-700 ml-4">• <span class="font-semibold">${change.field}:</span> from <span class="text-red-500">${change.oldValue}</span> to <span class="text-green-600">${change.newValue}</span></li>`
-                ).join('');
+                historyContent.innerHTML = reversedHistory.map(entry => {
+                    const timestamp = new Date(entry.timestamp).toLocaleString();
+                    const changeDetails = entry.changes.map(change => 
+                        `<div class="history-change">
+                            <span class="font-medium text-gray-600">${change.field}</span>
+                            <span>
+                                <span class="history-old">${change.oldValue}</span>
+                                <svg class="w-4 h-4 inline-block text-gray-400 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                <span class="history-new">${change.newValue}</span>
+                            </span>
+                        </div>`
+                    ).join('');
 
-                return `
-                    <div class="border p-3 rounded-lg bg-gray-50">
-                        <p class="font-bold text-gray-800">${entry.action || 'Edited'}</p>
-                        <p class="text-xs text-gray-500 mb-2">${timestamp}</p>
-                        <ul class="space-y-1">${changeDetails}</ul>
-                    </div>
-                `;
-            }).join('');
+                    return `
+                        <div class="history-card">
+                            <p class="font-bold text-gray-800">${entry.action || 'Edited'}</p>
+                            <p class="text-xs text-gray-500 mb-4">${timestamp}</p>
+                            <div class="space-y-1">${changeDetails}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
 
             DOMElements.historyModal.classList.remove('hidden');
         }
 
+        // ... (rest of the functions remain the same)
+
+        function showEditModal(taskId) { 
+            taskToEditId = taskId; 
+            const task = allTasks.find(t => t.id === taskId); 
+            if(task) { 
+                DOMElements.editTaskText.value = task.text; 
+                DOMElements.editTaskDate.value = task.date; 
+                DOMElements.editTaskTime.value = task.time || ''; 
+                DOMElements.editTaskCategory.value = task.category; 
+                DOMElements.editTaskPriority.value = task.priority || 'medium'; 
+                DOMElements.editTaskNotes.value = task.notes || ''; 
+                DOMElements.editTaskTags.value = task.tags ? task.tags.join(', ') : ''; 
+                
+                // Conditional display of history button
+                if (task.history && task.history.length > 0) {
+                    DOMElements.editHistoryBtn.classList.remove('hidden');
+                } else {
+                    DOMElements.editHistoryBtn.classList.add('hidden');
+                }
+                
+                DOMElements.editModal.classList.remove('hidden'); 
+            } 
+        }
+
+        async function handleEditTask(e) { 
+            e.preventDefault(); 
+            const task = allTasks.find(t => t.id === taskToEditId); 
+            if (task) { 
+                // Collect ALL fields being edited
+                const newTaskData = { 
+                    id: taskToEditId, 
+                    text: DOMElements.editTaskText.value, 
+                    date: DOMElements.editTaskDate.value, 
+                    time: DOMElements.editTaskTime.value, 
+                    category: DOMElements.editTaskCategory.value, 
+                    priority: DOMElements.editTaskPriority.value, 
+                    notes: DOMElements.editTaskNotes.value, 
+                    tags: parseTags(DOMElements.editTaskTags.value) 
+                };
+
+                // Preserve existing recurrence and reminder properties unless explicitly added to modal.
+                // For this scenario, we merge old and new data, letting the new data overwrite.
+                await crudOperation('update', { ...task, ...newTaskData }); 
+                hideEditModal(); 
+            } 
+        }
+
+        // ... (rest of updateDynamicElements and other functions remains the same)
 
         function setupEventListeners() { 
             DOMElements.headerStatsBtn.addEventListener('click', calculateAndShowStats); 
@@ -690,7 +786,7 @@
                     icon.classList.toggle('rotate-180');
                 });
                 
-                // Edit/Delete buttons (only visible in List View)
+                // Edit/Delete/History buttons 
                 taskItem.querySelector('.edit-btn')?.addEventListener('click', () => showEditModal(taskId));
                 taskItem.querySelector('.delete-btn')?.addEventListener('click', () => showConfirmModal(taskId));
                 taskItem.querySelector('.show-history-btn')?.addEventListener('click', () => showHistoryModal(taskId));
@@ -716,226 +812,6 @@
                 });
             });
         }
-        
-        async function handleAddTask(e) { 
-            e.preventDefault(); 
-            const { addTaskText, addTaskDate, addTaskTime, addTaskCategory, addTaskPriority, addTaskTags, addTaskRepeat } = DOMElements; 
-            if (addTaskText.value.trim() && addTaskDate.value) { 
-                await crudOperation('add', { 
-                    text: addTaskText.value.trim(), 
-                    date: addTaskDate.value, 
-                    time: addTaskTime.value, 
-                    category: addTaskCategory.value, 
-                    priority: addTaskPriority.value, 
-                    completed: false, 
-                    notes: '', 
-                    subtasks: [], 
-                    completedAt: null, 
-                    tags: parseTags(addTaskTags.value), 
-                    recurrence: addTaskRepeat.value, 
-                    history: [] // Initialize history on creation
-                }); 
-                hideAddTaskModal(); 
-            } 
-        }
-
-        async function handleEditTask(e) { 
-            e.preventDefault(); 
-            const task = allTasks.find(t => t.id === taskToEditId); 
-            if (task) { 
-                // Prepare new task data, crudOperation will handle history logging inside
-                const newTaskData = { 
-                    ...task, 
-                    id: taskToEditId, 
-                    text: DOMElements.editTaskText.value, 
-                    date: DOMElements.editTaskDate.value, 
-                    time: DOMElements.editTaskTime.value, 
-                    category: DOMElements.editTaskCategory.value, 
-                    priority: DOMElements.editTaskPriority.value, 
-                    notes: DOMElements.editTaskNotes.value, 
-                    tags: parseTags(DOMElements.editTaskTags.value) 
-                };
-
-                await crudOperation('update', newTaskData); 
-                hideEditModal(); 
-            } 
-        }
-
-        function showEditModal(taskId) { 
-            taskToEditId = taskId; 
-            const task = allTasks.find(t => t.id === taskId); 
-            if(task) { 
-                DOMElements.editTaskText.value = task.text; 
-                DOMElements.editTaskDate.value = task.date; 
-                DOMElements.editTaskTime.value = task.time || ''; 
-                DOMElements.editTaskCategory.value = task.category; 
-                DOMElements.editTaskPriority.value = task.priority || 'medium'; 
-                DOMElements.editTaskNotes.value = task.notes || ''; 
-                DOMElements.editTaskTags.value = task.tags ? task.tags.join(', ') : ''; 
-                
-                // Conditional display of history button
-                if (task.history && task.history.length > 0) {
-                    DOMElements.editHistoryBtn.classList.remove('hidden');
-                } else {
-                    DOMElements.editHistoryBtn.classList.add('hidden');
-                }
-                
-                DOMElements.editModal.classList.remove('hidden'); 
-            } 
-        }
-        
-        function handleCategoryFilter(e) { const target = e.target.closest('.category-filter-btn'); if (target) { currentCategoryFilter = target.dataset.category; styleCategoryFilters(); refreshDynamicContent(); } }
-        function handleAddSubtask(taskId, text, dueDate) { const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtask = { text, completed: false, completedAt: null, dueDate: dueDate || null }; crudOperation('update', { id: taskId, subtasks: [...(task.subtasks || []), newSubtask] }); } }
-        function handleSubtaskToggle(taskId, subtaskIndex) { const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtasks = task.subtasks.map((sub, i) => { if (i === subtaskIndex) { const isCompleted = !sub.completed; return { ...sub, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null }; } return sub; }); crudOperation('update', { id: taskId, subtasks: newSubtasks }); } }
-        function handleEditSubtask(button) { const { taskId, subtaskIndex } = button.dataset; const task = allTasks.find(t => t.id === taskId); if (!task) return; const oldText = task.subtasks[subtaskIndex].text; const newText = prompt("Edit subtask:", oldText); if (newText && newText.trim() !== oldText) { const newSubtasks = task.subtasks.map((sub, i) => i == subtaskIndex ? { ...sub, text: newText.trim() } : sub); crudOperation('update', { id: taskId, subtasks: newSubtasks }); } }
-        function handleDeleteSubtask(button) { if (!confirm('Are you sure you want to delete this subtask?')) return; const { taskId, subtaskIndex } = button.dataset; const task = allTasks.find(t => t.id === taskId); if (task) { const newSubtasks = task.subtasks.filter((_, i) => i != subtaskIndex); crudOperation('update', { id: taskId, subtasks: newSubtasks }); } }
-        
-        function calculateAndShowStats() { const completedTasks = allTasks.filter(t => t.completed); const totalCompleted = completedTasks.length; const totalTasks = allTasks.length; DOMElements.statsTotalCompleted.textContent = totalCompleted; DOMElements.statsCompletionRate.textContent = totalTasks > 0 ? `${Math.round((totalCompleted / totalTasks) * 100)}%` : 'N/A'; const now = new Date(); const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); startOfWeek.setHours(0,0,0,0); const completedThisWeek = completedTasks.filter(t => new Date(t.completedAt) >= startOfWeek).length; DOMElements.statsCompletedThisWeek.textContent = completedThisWeek; const completedByCategory = completedTasks.reduce((acc, task) => { const category = task.category || 'Other'; if (!acc[category]) acc[category] = []; acc[category].push(task); return acc; }, {}); DOMElements.statsCategoryBreakdown.innerHTML = Object.keys(completedByCategory).length > 0 ? Object.entries(completedByCategory).map(([cat, tasks]) => `<div class="mt-2"><h5 class="font-semibold text-sm ${categoryMap[cat].color.split(' ')[1]} flex items-center gap-2">${categoryMap[cat].icon} ${cat}</h5><ul class="space-y-1">${tasks.map(t => { const dueTime = t.time ? ` at ${formatTo12Hour(t.time)}` : ''; const completedTime = t.completedAt ? ` at ${formatTo12Hour(new Date(t.completedAt).toTimeString())}` : ''; return `<li class="ml-4 text-sm text-gray-600"><span class="font-medium">${t.text}</span><div class="text-xs text-gray-400 pl-2">Due: ${new Date(t.date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}${dueTime} | Completed: ${new Date(t.completedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}${completedTime}</div></li>`}).join('')}</ul></div>`).join('') : `<p class="text-gray-500 text-sm">No completed tasks yet.</p>`; DOMElements.statsModal.classList.remove('hidden'); }
-        
-        function handleLogout() { 
-            DOMElements.logoutPanel.classList.add('hidden'); // Hide the confirmation panel
-            showIndicator("Logging out...", "info", true); 
-            signOut(auth).then(() => { 
-                hideIndicator(); 
-                DOMElements.loginForm.reset(); 
-                showFlashMessage(DOMElements.logoutSuccessMessage, "Successfully logged out!"); 
-            }); 
-        }
-
-        function handleTodayClick() { renderTodayPanel(); DOMElements.todayPanel.classList.toggle('hidden'); }
-        function renderTodayPanel() { const today = new Date(); const todayStr = today.toISOString().split('T')[0]; today.setDate(today.getDate() + 1); const tomorrowStr = today.toISOString().split('T')[0]; const overdueTasks = allTasks.filter(t => !t.completed && t.date < todayStr); const todayTasks = allTasks.filter(t => !t.completed && t.date === todayStr); const tomorrowTasks = allTasks.filter(t => !t.completed && t.date === tomorrowStr); const renderSection = (title, tasks, color) => { if(tasks.length === 0) return `<div class="p-3"><h4 class="font-semibold text-sm ${color} mb-2">${title}</h4><p class="text-xs text-gray-400">Nothing to show.</p></div>`; return `<div class="p-3"><h4 class="font-semibold text-sm ${color} mb-2">${title}</h4><ul class="space-y-2">${tasks.map(t => `<li class="text-xs text-gray-700 flex items-center gap-2"><span class="priority-flag ${priorityFlagMap[t.priority]}"></span>${t.text}</li>`).join('')}</ul></div>`; }; DOMElements.todayPanelContent.innerHTML = renderSection('Overdue', overdueTasks, 'text-red-500') + renderSection('Today', todayTasks, 'text-indigo-500') + renderSection('Tomorrow', tomorrowTasks, 'text-gray-500'); }
-        function handleDeleteAllData() { const confirmation = prompt('This will permanently delete ALL of your tasks. This action cannot be undone. To confirm, please type "DELETE" below:'); if (confirmation === "DELETE") { showIndicator("Deleting all data...", "warning"); const deletePromises = allTasks.map(task => deleteDoc(doc(db, "users", auth.currentUser.uid, "tasks", task.id))); Promise.all(deletePromises) .then(() => { showIndicator("All tasks deleted", "success"); }) .catch(error => { console.error("Error deleting all tasks:", error); hideIndicator(); alert("An error occurred while deleting your data."); }); } else { alert("Deletion cancelled. Your data is safe."); } }
-        function showCalendarTooltip(e) { const dayEl = e.target.closest('.calendar-day:not(.other-month)'); if (!dayEl) return; const day = parseInt(dayEl.dataset.day, 10); const tasks = getFilteredTasks().filter(t => new Date(t.date + 'T00:00:00').getDate() === day && new Date(t.date + 'T00:00:00').getMonth() === currentCalendarDate.getMonth()); if (tasks.length === 0) return; const tooltip = DOMElements.calendarTooltip; tooltip.innerHTML = `<ul class="space-y-1">${tasks.map(t => `<li class="flex items-center gap-2 text-xs"><div class="w-2 h-2 rounded-full ${categoryDotMap[t.category]} flex-shrink-0"></div><span class="${t.completed ? 'completed task-title-completed' : ''}">${t.text}</span></li>`).join('')}</ul>`; const rect = dayEl.getBoundingClientRect(); tooltip.style.left = `${rect.left}px`; tooltip.style.top = `${rect.bottom + 5}px`; tooltip.classList.remove('hidden'); setTimeout(() => tooltip.style.opacity = 1, 10); }
-        function hideCalendarTooltip() { const tooltip = DOMElements.calendarTooltip; tooltip.style.opacity = 0; setTimeout(() => tooltip.classList.add('hidden'), 200); }
-        function getRelativeDateGroup(dateString) { const today = new Date(); today.setHours(0,0,0,0); const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1); const taskDate = new Date(dateString + 'T00:00:00'); if (taskDate < today) return "Overdue"; if (taskDate.getTime() === today.getTime()) return "Today"; if (taskDate.getTime() === tomorrow.getTime()) return "Tomorrow"; return taskDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric'}); }
-        function switchView(view) { 
-            currentView = view; 
-            const views = { list: DOMElements.listViewContainer, board: DOMElements.kanbanViewContainer, calendar: DOMElements.calendarViewContainer }; 
-            const buttons = { list: DOMElements.viewListBtn, board: DOMElements.viewBoardBtn, calendar: DOMElements.viewCalendarBtn }; 
-            for (const v in views) { 
-                views[v].classList.toggle('hidden', v !== view); 
-                buttons[v].classList.toggle('bg-indigo-600', v === view); 
-                buttons[v].classList.toggle('text-white', v === view); 
-            } 
-            DOMElements.categoryFilters.classList.toggle('hidden', view === 'calendar'); 
-            DOMElements.searchInput.placeholder = view === 'board' ? 'Filter board...' : 'Search tasks or #tags...'; 
-            
-            // Hide the details modal when switching out of calendar view
-            DOMElements.calendarDayModal.classList.add('hidden');
-            
-            refreshDynamicContent(); 
-        }
-        function showAddTaskModal() { DOMElements.addTaskForm.reset(); setSmartDefaults(); DOMElements.addTaskModal.classList.remove('hidden'); DOMElements.addTaskText.focus(); }
-        function hideAddTaskModal() { DOMElements.addTaskModal.classList.add('hidden'); }
-        function hideEditModal() { DOMElements.editModal.classList.add('hidden'); taskToEditId = null; }
-        function showConfirmModal(taskId) { taskToDeleteId = taskId; DOMElements.confirmModal.classList.remove('hidden'); }
-        function hideConfirmModal() { taskToDeleteId = null; DOMElements.confirmModal.classList.add('hidden'); }
-        function getGreeting() { const h = new Date().getHours(); if (h < 12) return 'Good morning'; if (h < 18) return 'Good afternoon'; return 'Good evening'; }
-        function getInitials(email) { if (!email) return '?'; const p = email.split('@')[0].split(/[._-]/); return p.length > 1 ? (p[0][0] + p[1][0]) : email[0]; }
-        function formatTo12Hour(timeString) { if (!timeString) return ''; const date = new Date(); const [hour, minute] = timeString.split(':'); date.setHours(hour, minute); return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); }
-        
-        // IMPORTANT: Updated updateDynamicElements to correctly apply pulsing effects.
-        function updateDynamicElements() { 
-            const now = new Date();
-            
-            // 1. Update urgency for List View tasks and Calendar Modal tasks
-            document.querySelectorAll('.task-item:not(.completed), .calendar-task-item:not(.completed)').forEach(el => { 
-                const isoDate = el.dataset.datetime; 
-                if (isoDate) { 
-                    const taskDateTime = new Date(isoDate); 
-                    const diffHours = (taskDateTime.getTime() - now.getTime()) / 3600000; 
-                    el.classList.remove('pulse-overdue', 'pulse-due-soon'); 
-                    if (diffHours < 0) { 
-                        el.classList.add('pulse-overdue'); 
-                    } else if (diffHours <= 1 && diffHours >= 0) {
-                        el.classList.add('pulse-due-soon'); 
-                    } 
-                } 
-            }); 
-            
-            // 2. Update urgency for Calendar Day Boxes
-            document.querySelectorAll('.calendar-day:not(.other-month)').forEach(dayEl => {
-                const dateString = dayEl.dataset.date;
-                if (!dateString) return;
-
-                const tasksOnDay = allTasks.filter(t => t.date === dateString && !t.completed);
-                
-                // Remove previous pulse classes to prevent stacking animation
-                dayEl.classList.remove('pulse-overdue', 'pulse-due-soon'); 
-
-                const overdueTask = tasksOnDay.some(t => new Date(`${t.date}T${t.time || '23:59:59'}`) < now);
-                const dueSoonTask = tasksOnDay.some(t => {
-                    const taskDateTime = new Date(`${t.date}T${t.time || '23:59:59'}`);
-                    const diffHours = (taskDateTime.getTime() - now.getTime()) / 3600000;
-                    return diffHours > 0 && diffHours <= 1;
-                });
-                
-                if (overdueTask) {
-                    dayEl.classList.add('pulse-overdue');
-                } else if (dueSoonTask) {
-                    dayEl.classList.add('pulse-due-soon');
-                }
-            });
-
-            // 3. Update relative times everywhere
-            document.querySelectorAll('.relative-time').forEach(el => { 
-                const isoDate = el.dataset.datetime; 
-                if (isoDate) { 
-                    el.textContent = formatTimeDifference(isoDate); 
-                    const diffHours = (new Date(isoDate).getTime() - new Date().getTime()) / 3600000; 
-                    el.classList.remove('text-red-600', 'text-yellow-600'); 
-                    if (diffHours < 0) { 
-                        el.classList.add('text-red-600'); 
-                    } else if (diffHours <= 1) { 
-                        el.classList.add('text-yellow-600'); 
-                    } 
-                } 
-            }); 
-        }
-
-        function formatTimeDifference(isoDate) { const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' }); const diffSeconds = (new Date(isoDate).getTime() - Date.now()) / 1000; const diffDays = diffSeconds / 86400; if (Math.abs(diffDays) >= 1) return rtf.format(Math.round(diffDays), 'day'); const diffHours = diffSeconds / 3600; if (Math.abs(diffHours) >= 1) return rtf.format(Math.round(diffHours), 'hour'); const diffMinutes = diffSeconds / 60; if (Math.abs(diffMinutes) >= 1) return rtf.format(Math.round(diffMinutes), 'minute'); return 'just now'; }
-        function showFlashMessage(element, message) { element.textContent = message; element.classList.remove('hidden'); setTimeout(() => element.classList.add('hidden'), 3000); }
-        function clearUI() { DOMElements.taskListContainer.innerHTML = ''; if (DOMElements.dashboardPendingBreakdown) DOMElements.dashboardPendingBreakdown.innerHTML = ''; if(DOMElements.dashboardNextTask) DOMElements.dashboardNextTask.innerHTML = `<p class="text-gray-400 text-center">No upcoming tasks!</p>`; if(DOMElements.dashboardOverdue) DOMElements.dashboardOverdue.innerHTML = `<p class="text-gray-400 text-center">No overdue tasks!</p>`; if(DOMElements.dashboardOverdueCount) DOMElements.dashboardOverdueCount.textContent = '0'; }
-        function setSmartDefaults() { DOMElements.addTaskDate.value = new Date().toISOString().split('T')[0]; const now = new Date(); DOMElements.addTaskTime.value = `${String((now.getHours() + 1) % 24).padStart(2, '0')}:00`; }
-        
-        function showIndicator(message, status = "info", showSpinner = false, duration = 500) { 
-            DOMElements.indicatorText.textContent = message; 
-            DOMElements.appIndicator.className = `fixed bottom-5 left-1/2 -translate-x-1/2 text-white text-sm py-2 px-4 rounded-full shadow-lg flex items-center gap-2 z-50 ${status}`;
-            
-            const spinner = document.getElementById('indicator-spinner');
-            if (spinner) {
-                spinner.classList.toggle('hidden', !showSpinner);
-            }
-            
-            DOMElements.appIndicator.classList.remove('hidden'); 
-
-            if (!showSpinner) {
-                setTimeout(hideIndicator, duration);
-            }
-        }
-        
-        function hideIndicator() { DOMElements.appIndicator.classList.add('hidden'); }
-        
-        function styleCategoryFilters() { document.querySelectorAll('.category-filter-btn').forEach(btn => { const category = btn.dataset.category; if (category !== 'All' && !btn.querySelector('svg')) { btn.innerHTML = `${categoryMap[category].icon} ${category}`; } btn.className = 'category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2'; if (category === currentCategoryFilter) { if (category === 'All') btn.classList.add('bg-indigo-600', 'text-white'); else btn.className += ` ${categoryActiveMap[category]}`; } else { if (category === 'All') btn.classList.add('bg-gray-200', 'text-gray-800'); else btn.className += ` ${categoryMap[category].color}`; } }); }
-        function parseTags(tagsString) { return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0 && tag.startsWith('#')).map(tag => tag.toLowerCase()); }
-        function handleRecurringTask(task) { if(!task.recurrence || task.recurrence === 'none') return; const nextDueDate = new Date(task.date + 'T00:00:00'); if(task.recurrence === 'daily') nextDueDate.setDate(nextDueDate.getDate() + 1); else if (task.recurrence === 'weekly') nextDueDate.setDate(nextDueDate.getDate() + 7); else if (task.recurrence === 'monthly') nextDueDate.setMonth(nextDueDate.getMonth() + 1); const { id, completed, completedAt, ...new_task_data } = task; const newTask = { ...new_task_data, date: nextDueDate.toISOString().split('T')[0], completed: false, completedAt: null, }; crudOperation('add', newTask); crudOperation('update', { id: task.id, recurrence: 'none' }); }
-        function autoResizeTextarea(textarea) { textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
-        
-        DOMElements.loginForm.addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            DOMElements.authError.textContent = ''; 
-            showIndicator("Signing in...", "info", true); 
-            const email = e.target.elements['login-email'].value; 
-            const password = e.target.elements['login-password'].value; 
-            try { 
-                await signInWithEmailAndPassword(auth, email, password); 
-                sessionStorage.setItem('loginJustOccurred', 'true'); 
-                hideIndicator();
-            } catch (error) { 
-                DOMElements.authError.textContent = 'Incorrect email or password.'; 
-                hideIndicator(); 
-            } 
-        });
         
         setupEventListeners();
         styleCategoryFilters();
