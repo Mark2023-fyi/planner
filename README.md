@@ -1,820 +1,591 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Personal Planner</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Gemini ProPOS - V13 Traceability Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; }
-        .hidden { display: none; }
-        .completed { color: #6b7280; }
-        .task-title-completed { text-decoration: line-through; }
-        .task-item { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
-        .task-item:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
-        .task-item.completed { background-color: #f9fafb; opacity: 0.8; }
-        .priority-flag { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .modal { animation: fadeIn 0.2s ease-out; }
-        #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .calendar-day { 
-            background-color: white; 
-            border-radius: 0.5rem; 
-            padding: 0.5rem; 
-            min-height: 110px; 
-            font-size: 0.875rem; 
-            color: #4b5563; 
-            transition: background-color 0.2s; 
-            cursor: pointer; 
-            display: flex; 
-            flex-direction: column; 
-            position: relative; 
-            box-sizing: border-box;
+        /* ============================
+           VARIABLES & RESET
+           ============================ */
+        :root {
+            --primary: #2563eb; --primary-hover: #1d4ed8;
+            --bg: #f8fafc; --panel: #ffffff; --border: #e2e8f0;
+            --text: #0f172a; --text-muted: #64748b;
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
         }
-        .calendar-day:not(.other-month):hover { background-color: #eff6ff; }
-        .calendar-day.other-month { background-color: #f9fafb; color: #d1d5db; cursor: default; }
-        .calendar-day.is-today .calendar-day-header { color: white; background-color: #4f46e5; border-radius: 9999px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
-        .calendar-day-header { font-weight: 600; text-align: center; margin-bottom: 0.25rem; }
-        .details-container { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out; }
-        .details-container.open { max-height: 40vh; overflow-y: auto; padding-top: 1rem; margin-top: 1rem; }
-        .category-filter-btn { transition: background-color 0.2s, color 0.2s; }
-        .calendar-tasks-container { flex-grow: 1; overflow: hidden; }
-        #calendar-tooltip { position: absolute; z-index: 50; width: max-content; max-width: 250px; background-color: #1f2937; color: white; padding: 0.75rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-        .completion-timestamp { text-decoration: none; }
-        .task-dot { width: 8px; height: 8px; border-radius: 50%; margin: 2px; }
-        #kanban-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-        .kanban-column { background-color: #f3f4f6; border-radius: 0.75rem; padding: 1rem; }
-        .kanban-column-title { font-weight: 600; color: #4b5563; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-        .kanban-tasks { min-height: 100px; space-y: 0.75rem; }
-        .kanban-card { background-color: white; border-radius: 0.5rem; padding: 0.75rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: grab; }
-        .kanban-card.dragging { opacity: 0.5; }
-        .kanban-column.drag-over { background-color: #e0e7ff; }
-        @keyframes flash-red { 50% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4); } }
-        .flash-error { animation: flash-red 0.7s ease-out; }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6; --primary-hover: #60a5fa;
+            --bg: #0f172a; --panel: #1e293b; --border: #334155;
+            --text: #f8fafc; --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; outline: none; }
+        body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+        button { cursor: pointer; transition: 0.2s; }
         
-        /* PULSING FIX: Use box-shadow that doesn't change dimensions */
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+        /* ============================
+           LAYOUT
+           ============================ */
+        .app-container { display: flex; width: 100%; height: 100%; }
+        .sidebar { width: 80px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 10; }
+        .nav-item { width: 48px; height: 48px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 15px; color: var(--text-muted); position: relative; }
+        .nav-item:hover { background: var(--bg); color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
+        .badge-dot { position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background: var(--danger); border-radius: 50%; border: 2px solid var(--panel); display: none; }
 
-        .pulse-overdue { animation: pulse-red 2s infinite; }
-        .pulse-due-soon { animation: pulse-orange 2s infinite; }
+        .main-content { flex: 1; display: flex; overflow: hidden; position: relative; }
+        .view { display: none; flex: 1; height: 100%; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .view.active { display: flex; }
+        .view.pos-view { padding: 0; flex-direction: row; } 
 
-        .skeleton { background-color: #e5e7eb; border-radius: 0.5rem; }
-        .skeleton-title { width: 60%; height: 20px; margin-bottom: 0.5rem; }
-        .skeleton-meta { width: 40%; height: 16px; }
-        @keyframes shimmer { 100% { transform: translateX(100%); } }
-        .skeleton { position: relative; overflow: hidden; }
-        .skeleton::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; transform: translateX(-100%); background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%); animation: shimmer 2s infinite; }
-        .task-notes-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; resize: none; transition: background-color 0.2s, border-color 0.2s; }
-        .task-notes-textarea:focus { outline: none; border-color: #4f46e5; background-color: #fafafa; }
-        #app-indicator.success { background-color: #10B981; } /* Green */
-        #app-indicator.info { background-color: #3B82F6; } /* Blue */
-        #app-indicator.warning { background-color: #EF4444; } /* Red */
+        /* ============================
+           POS INTERFACE
+           ============================ */
+        .pos-grid-area { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+        .search-bar-container { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+        .search-input { background: var(--panel); border: 1px solid var(--border); padding: 10px 15px; border-radius: 8px; color: var(--text); width: 100%; transition: border 0.2s; }
+        .search-input:focus { border-color: var(--primary); }
 
-        /* Added for the settings toggle styling */
-        .toggle-checkbox:checked { right: 0; border-color: #4f46e5; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #4f46e5; }
-        .toggle-label { cursor: pointer; text-indent: -9999px; width: 40px; height: 24px; background: #9ca3af; display: block; border-radius: 100px; position: relative; }
-        .toggle-checkbox { opacity: 0; width: 0; height: 0; }
-        .toggle-checkbox:checked ~ .toggle-label:before { transform: translateX(16px); }
-        .toggle-label:before { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 90px; transition: 0.3s; box-shadow: 0 0 1px 0 rgba(10, 10, 10, 0.29); }
+        .category-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; scrollbar-width: none; }
+        .cat-pill { padding: 8px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+        .cat-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; overflow-y: auto; padding-right: 5px; }
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; transition: transform 0.1s; }
+        .card:active { transform: scale(0.98); }
+        .card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+        .stock-tag { position: absolute; top: 8px; right: 8px; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .stock-ok { background: #dcfce7; color: #166534; } 
+        .stock-low { background: #fef3c7; color: #92400e; }
+
+        .pos-cart-area { width: 380px; background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+        .cart-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .cart-list { flex: 1; overflow-y: auto; padding: 20px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed var(--border); padding-bottom: 10px; }
+        .qty-box { display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 4px; border-radius: 6px; }
+        .qty-btn { width: 24px; height: 24px; border: none; background: var(--panel); border-radius: 4px; color: var(--text); font-weight: bold; }
         
-        /* Styles for Calendar Day Details (now in a modal) */
-        .calendar-task-item { background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .calendar-task-item.completed { opacity: 0.7; }
-        .calendar-task-item:not(:last-child) { margin-bottom: 0.75rem; }
+        #edit-mode-bar { display:none; padding: 15px; background: #fffbeb; border-bottom: 1px solid #fcd34d; color: #92400e; font-size: 0.85rem; animation: slideDown 0.3s; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
-        /* History Modal Specific Styles */
-        .history-card { border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #f9fafb; padding: 1rem; }
-        .history-change { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 0.25rem 0; border-bottom: 1px dotted #e5e7eb; }
-        .history-change:last-child { border-bottom: none; }
-        .history-old { color: #ef4444; }
-        .history-new { color: #10b981; }
+        .cart-footer { padding: 20px; background: var(--bg); border-top: 1px solid var(--border); }
+        .total-display { font-size: 1.5rem; font-weight: 800; color: var(--text); display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .btn-lg { padding: 15px; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        .btn-pay { background: var(--success); }
+        .btn-pay:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+        /* ============================
+           RECEIPTS & TIMELINE
+           ============================ */
+        .receipt-paper { 
+            background: #fff; padding: 20px; width: 100%; max-width: 340px; margin: 0 auto;
+            font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #000;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); border: 1px solid #eee;
+        }
+        .receipt-header, .receipt-footer { text-align: center; margin-bottom: 10px; }
+        .receipt-logo { font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 5px; }
+        .dashed-line { border-top: 1px dashed #000; margin: 10px 0; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .receipt-row.bold { font-weight: 700; }
+        .barcode { font-family: 'Libre Barcode 39 Text', cursive; font-size: 2.5rem; text-align: center; margin-top: 15px; line-height: 1; }
+
+        .timeline-wrapper { position: relative; margin-top: 30px; padding-left: 20px; }
+        .timeline-node { position: relative; padding-left: 20px; margin-bottom: 20px; }
+        .timeline-left { position: absolute; left: -14px; top: 0; display:flex; flex-direction:column; align-items:center; height:100%; }
+        .timeline-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; z-index: 2; border: 3px solid var(--bg); }
+        .timeline-line { flex:1; width:2px; background:var(--border); margin-top:5px; }
+        .timeline-content { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; box-shadow: var(--shadow); transition:0.2s; }
+        .timeline-content:hover { border-color: var(--primary); }
+        .badge-status { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+
+        /* ============================
+           MODULES & UTILS
+           ============================ */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--panel); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); }
+        
+        .history-layout { display: flex; height: 100%; gap: 20px; }
+        .history-list-col { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; }
+        .history-preview-col { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow-y: auto; display: flex; justify-content: center; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal { background: var(--panel); padding: 30px; border-radius: 16px; width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; }
+        
+        /* Detailed Transaction Modal Specifics */
+        .detail-modal { width: 800px; max-width: 95vw; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .detail-info-pane { padding: 10px; display: flex; flex-direction: column; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        
+        #toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 200; }
+        .toast { background: var(--panel); padding: 10px 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--primary); }
+        
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <div id="loader" class="loader"></div>
-    <div id="calendar-tooltip" class="hidden"></div>
-    <div id="app-indicator" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm py-2 px-4 rounded-full shadow-lg flex items-center gap-2 z-50">
-        <svg id="indicator-spinner" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <span id="indicator-text">Saving...</span>
-    </div>
-
-    <div id="add-task-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Add New Task</h3><form id="add-task-form" class="space-y-4"><div class="relative"><input type="text" id="add-task-text" placeholder="What do you need to do?" class="w-full bg-gray-100 rounded-lg pl-4 pr-12 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><button type="button" id="generate-subtasks-btn" title="✨ Generate Subtasks with AI" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-9l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L12.707 10l-1.414 1.414a1 1 0 01-1.414 0L7.586 9.121a1 1 0 010-1.414L8.293 7a1 1 0 011.414 0L12 9.293l2.293-2.293a1 1 0 011.414 0l.707.707a1 1 0 010 1.414L13.414 12l1.414 1.414a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414 0L12 13.414l-2.293 2.293a1 1 0 01-1.414 0l-.707-.707a1 1 0 010-1.414L10.586 12 9.172 10.586a1 1 0 010-1.414l.707-.707a1 1 0 011.414 0L12 8.586z" /></svg></button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="add-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="add-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low Priority</option><option value="medium" selected>Medium Priority</option><option value="high">High Priority</option></select><select id="add-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option><option value="Work">Work</option><option value="School">School</option><option value="Other">Other</option></select></div><div><label for="add-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="add-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="add-task-repeat" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><div><label for="add-task-reminder" class="block mb-1 text-sm font-medium text-gray-600">Reminder</label><select id="add-task-reminder" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="none">No reminder</option><option value="5">5 minutes before</option><option value="15">15 minutes before</option><option value="60">1 hour before</option></select><div id="add-email-toggle-container" class="hidden mt-2 pl-2"><label class="flex items-center space-x-2"><input type="checkbox" id="add-task-email-toggle" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="text-sm text-gray-600">Also send an email reminder?</span></label></div></div></div><div id="generated-subtasks-container" class="hidden space-y-2 pt-2 max-h-32 overflow-y-auto"><h4 class="text-sm font-bold text-gray-600">✨ AI Generated Subtasks:</h4><ul id="generated-subtasks-list" class="space-y-1 text-sm text-gray-700"></ul></div><div class="flex justify-end gap-4 pt-4"><button type="button" id="cancel-add-task-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Add Task</button></div></form></div></div>
-    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full"><h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Task</h3><form id="edit-task-form" class="space-y-4"><input type="text" id="edit-task-text" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><select id="edit-task-priority" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="low">Low</option> <option value="medium">Medium</option> <option value="high">High</option></select><select id="edit-task-category" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="Personal">Personal</option> <option value="Work">Work</option> <option value="School">School</option> <option value="Other">Other</option></select></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><input type="date" id="edit-task-date" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" required><input type="time" id="edit-task-time" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><div><label for="edit-task-tags" class="block mb-2 text-sm font-medium text-gray-600">Tags (comma separated)</label><input type="text" id="edit-task-tags" placeholder="#urgent, #project-x" class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500"></div><textarea id="edit-task-notes" placeholder="Add notes..." class="w-full bg-gray-100 rounded-lg px-4 py-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea><div class="flex justify-between gap-4 pt-4"><button type="button" id="edit-history-btn" class="hidden bg-gray-100 hover:bg-gray-200 text-sm font-bold py-2 px-4 rounded-lg flex items-center gap-1"><svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Edit History</button><div class="flex gap-4"><button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Save Changes</button></div></div></form></div></div>
-    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-4">Confirm Deletion</h3><p class="text-gray-600 mb-6">This action cannot be undone.</p><div class="flex justify-center gap-4"><button id="cancel-delete-btn" class="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-lg">Cancel</button><button id="confirm-delete-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button></div></div></div>
-    <div id="calendar-day-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full"><h3 id="calendar-modal-title" class="text-xl font-bold mb-4 text-gray-800"></h3><div id="calendar-modal-tasks" class="space-y-2 max-h-80 overflow-y-auto"></div><div class="text-right mt-6"><button id="calendar-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button></div></div></div>
-    <div id="history-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal">
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-lg w-full">
-            <h3 class="text-2xl font-bold mb-6 text-gray-800">Task Edit History</h3>
-            <div id="history-modal-content" class="space-y-4 max-h-96 overflow-y-auto"></div>
-            <div class="text-right mt-6">
-                <button id="history-modal-close-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button>
-            </div>
+<div class="app-container">
+    
+    <div class="sidebar">
+        <div class="nav-item active" onclick="Controller.switchView('pos')" title="POS">🖥️</div>
+        <div class="nav-item" onclick="Controller.switchView('returns')" title="Returns Lookup">↩️</div>
+        <div class="nav-item" onclick="Controller.switchView('ps')" title="Problem Solve">
+            🛠️ <div class="badge-dot" id="ps-badge"></div>
+        </div>
+        <div class="nav-item" onclick="Controller.switchView('dashboard')" title="Analytics">📊</div>
+        <div class="nav-item" onclick="Controller.switchView('history')" title="Audit Trail">📜</div>
+        <div class="nav-item" onclick="Controller.switchView('inventory')" title="Inventory">📦</div>
+        
+        <div style="margin-top:auto;">
+            <div class="nav-item" onclick="Utils.toggleTheme()" title="Theme">🌙</div>
+            <div class="nav-item" onclick="Utils.resetData()" title="Reset" style="color:var(--danger);">🗑️</div>
         </div>
     </div>
-    <div id="stats-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="stats-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Productivity Stats</h3><div class="space-y-4 max-h-[70vh] overflow-y-auto"><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Total Tasks Completed:</span><span id="stats-total-completed" class="font-bold text-lg text-indigo-600">0</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Overall Completion Rate:</span><span id="stats-completion-rate" class="font-bold text-lg text-indigo-600">0%</span></div><div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Tasks Finished This Week:</span><span id="stats-completed-this-week" class="font-bold text-lg text-indigo-600">0</span></div><div><h4 class="font-medium text-gray-600 mb-2">Completed Task Log:</h4><div id="stats-category-breakdown" class="space-y-3"></div></div></div></div></div>
-    <div id="settings-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 modal"><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl max-w-md w-full relative"><button id="settings-modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button><h3 class="text-2xl font-bold mb-6 text-gray-800">Settings</h3><div class="space-y-4"><h4 class="font-semibold text-gray-700">Task View</h4><div class="flex items-center justify-between"><label for="toggle-show-completed" class="text-sm font-medium text-gray-600">Show Completed Tasks</label><div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"><input type="checkbox" id="toggle-show-completed" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label for="toggle-show-completed" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div><div class="mt-6 pt-4 border-t border-gray-200"><h4 class="font-semibold text-red-600">Danger Zone</h4><p class="text-xs text-gray-500 mb-2">This action cannot be undone.</p><button id="delete-all-data-btn" class="w-full bg-red-100 text-red-700 hover:bg-red-200 font-bold py-2 px-4 rounded-lg">Delete All Task Data</button></div></div></div></div>
 
-    <div id="auth-container" class="hidden container mx-auto max-w-md p-4 sm:p-8 mt-10 animate-fade-in"><div id="logout-success-message" class="hidden bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 text-center"></div><div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl"><h2 class="text-3xl font-bold text-center text-indigo-600 mb-8">Login</h2><form id="login-form"><input type="email" id="login-email" autocomplete="username" class="w-full bg-gray-100 rounded-lg p-3 border mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="Email"><input type="password" id="login-password" autocomplete="current-password" class="w-full bg-gray-100 rounded-lg p-3 border mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="Password"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md">Sign In</button></form><p id="auth-error" class="text-red-500 text-center mt-4"></p><p class="text-center text-sm text-gray-500 mt-6">To register an account, please contact the administrator.</p></div></div>
+    <div class="main-content">
+        <div id="pos" class="view pos-view active">
+            <div class="pos-grid-area">
+                <div class="search-bar-container">
+                    <h1 style="font-weight:800; font-size:1.4rem;">ProPOS V13</h1>
+                    <input type="text" class="search-input" style="width:250px;" placeholder="Search products..." onkeyup="View.renderGrid(this.value)">
+                </div>
+                <div class="category-scroll" id="categoryList"></div>
+                <div class="product-grid" id="productGrid"></div>
+            </div>
+            
+            <div class="pos-cart-area">
+                <div class="cart-header">
+                    <h3>Current Order</h3>
+                    <span style="color:var(--text-muted); font-size:0.9rem;" id="txn-id">Loading...</span>
+                </div>
+                <div id="edit-mode-bar">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>✏️ Modifying <span id="ref-id-display"></span></strong>
+                        <button onclick="Controller.cancelEditMode()" style="background:none;border:none;color:red;">Cancel</button>
+                    </div>
+                    <input type="text" id="txn-comment" placeholder="Reason (e.g. Defective, Wrong size)" style="width:100%; margin-top:5px; border:1px solid #ccc; padding:4px;">
+                </div>
+                <div class="cart-list" id="cartList"></div>
+                <div class="cart-footer">
+                    <div class="total-display">
+                        <span>Total</span><span id="total-disp">$0.00</span>
+                    </div>
+                    <button class="btn-lg btn-pay" id="payBtn" onclick="Controller.openPayModal()" disabled>PAY $0.00</button>
+                    <button class="btn-lg" style="background:var(--danger); margin-top:10px;" onclick="Controller.clearCart()">Clear Cart</button>
+                </div>
+            </div>
+        </div>
 
-    <div id="planner-container" class="hidden container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="flex flex-wrap justify-between items-center mb-8 gap-4">
-            <div><h1 class="text-3xl md:text-4xl font-bold text-indigo-600">My Planner</h1><p id="current-date" class="text-gray-500 text-sm md:text-base"></p></div>
-            <div class="flex items-center gap-2 sm:gap-3 relative">
-                <div id="user-profile-area" class="flex items-center gap-2">
-                    <svg class="w-10 h-10 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-                    <div class="hidden sm:block">
-                        <p id="user-profile-name" class="font-semibold text-sm text-gray-800"></p>
-                        <p class="text-xs text-gray-500">Welcome back!</p>
+        <div id="returns" class="view">
+            <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+                <h1 style="margin-bottom:20px;">Returns & Traceability</h1>
+                <div style="background: var(--panel); padding:30px; border-radius:12px; border:1px solid var(--border); text-align:center;">
+                    <div style="font-size:3rem; margin-bottom:10px;">🧾</div>
+                    <h3>Transaction Tree</h3>
+                    <p style="color:var(--text-muted); margin-bottom:20px;">Scan any receipt ID to trace its full lifecycle.</p>
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <input type="text" id="return-search" class="search-input" placeholder="ORD-12345" style="width:300px;">
+                        <button class="btn-lg" style="background:var(--primary); width:auto; padding:0 20px;" onclick="Controller.lookupChain()">Trace</button>
                     </div>
                 </div>
-                <button id="header-today-btn" title="Today's Tasks" class="relative bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></button>
-                <button id="header-stats-btn" title="Productivity Stats" class="bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg></button>
-                <button id="header-settings-btn" title="Settings" class="bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-                <button id="header-add-task-btn" title="Add New Task" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full transition-colors duration-200 shadow-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg></button>
-                <button id="header-logout-btn" title="Log Out" class="bg-white hover:bg-gray-100 text-gray-600 p-2 rounded-full transition-colors duration-200 shadow-sm border"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
+                <div id="timeline-area" class="timeline-wrapper" style="display:none;"></div>
+            </div>
+        </div>
 
-                <div id="logout-panel" class="hidden absolute top-14 right-0 w-64 bg-white rounded-lg shadow-xl p-4 text-sm z-50 animate-fade-in border border-gray-100">
-                    <p class="font-semibold text-gray-800 mb-2">Are you sure?</p>
-                    <p class="text-gray-500 mb-4">You are currently signed in as <span id="logout-user-name" class="font-medium text-indigo-600"></span>.</p>
-                    <div class="flex justify-end gap-2">
-                        <button id="cancel-logout-btn" class="bg-gray-200 hover:bg-gray-300 py-1 px-3 rounded-lg">Cancel</button>
-                        <button id="confirm-logout-btn" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-lg">Yes, Log Out</button>
-                    </div>
+        <div id="ps" class="view">
+            <h1 style="margin-bottom:10px;">Problem Solve (Quarantine)</h1>
+            <div id="psGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;"></div>
+        </div>
+
+        <div id="dashboard" class="view">
+            <h1 style="margin-bottom:20px;">Analytics</h1>
+            <div class="dash-grid">
+                <div class="stat-card">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">Total Revenue</div>
+                    <div style="font-size:2rem; font-weight:800; color:var(--success);" id="d-rev">$0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">Transactions</div>
+                    <div style="font-size:2rem; font-weight:800; color:var(--primary);" id="d-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">Pending Returns</div>
+                    <div style="font-size:2rem; font-weight:800; color:var(--warning);" id="d-returns">0</div>
                 </div>
             </div>
-
-            <div id="today-panel" class="hidden absolute top-20 right-8 md:right-32 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 animate-fade-in">
-                <div class="p-4 border-b flex justify-between items-center font-semibold">Today's Agenda <button id="today-panel-close-btn" class="text-gray-400 hover:text-gray-600">&times;</button></div>
-                <div id="today-panel-content" class="max-h-96 overflow-y-auto"></div>
-            </div>
-        </header>
-
-        <div id="login-success-message" class="hidden bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 text-center"></div>
-        <div id="task-success-message" class="hidden bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 text-center"></div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-xl"><h3 class="text-lg font-semibold text-gray-500 text-center">Upcoming Task</h3><div id="dashboard-next-task" class="mt-2 text-left"></div></div>
-            <div class="bg-white p-6 rounded-2xl shadow-xl"><h3 class="text-lg font-semibold text-gray-500 text-center mb-2">Pending Tasks</h3><div id="dashboard-pending-breakdown" class="space-y-2 text-sm"></div></div>
-            <div class="bg-white p-6 rounded-2xl shadow-xl"><h3 class="text-lg font-semibold text-gray-500 text-center">Overdue (<span id="dashboard-overdue-count">0</span>)</h3><div id="dashboard-overdue" class="mt-2 text-left"></div></div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-xl mb-8 space-y-4">
-            <div class="flex items-center bg-gray-100 rounded-lg p-1">
-                <button id="view-list-btn" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md bg-indigo-600 text-white">List</button>
-                <button id="view-board-btn" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md text-gray-600 hover:bg-gray-200">Board</button>
-                <button id="view-calendar-btn" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md text-gray-600 hover:bg-gray-200">Calendar</button>
+        <div id="history" class="view">
+            <div style="margin-bottom:20px;">
+                <h1>Audit Trail</h1>
+                <input type="text" class="search-input" placeholder="Filter ID..." onkeyup="View.renderHistoryList(this.value)" style="width:300px; margin-top:10px;">
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="relative"><input type="text" id="searchInput" placeholder="Search tasks or #tags..." class="w-full bg-gray-100 rounded-lg px-4 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"><span id="search-results-counter" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500"></span></div>
-                <div id="category-filters" class="flex flex-wrap items-center gap-2"><span class="text-sm font-semibold text-gray-600 mr-2">Categories:</span><button data-category="All" class="category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">All</button><button data-category="Personal" class="category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">Personal</button><button data-category="Work" class="category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">Work</button><button data-category="School" class="category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">School</button><button data-category="Other" class="category-filter-btn text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">Other</button></div>
-            </div>
-        </div>
-        
-        <div id="list-view-container"><div id="task-list-container" class="space-y-4"></div></div>
-        <div id="kanban-view-container" class="hidden"><div id="kanban-board"></div></div>
-
-        <div id="calendar-view-container" class="hidden">
-            <div class="bg-white p-6 rounded-2xl shadow-xl">
-                <div class="flex justify-between items-center mb-4">
-                    <button id="prev-month-btn" class="p-2 rounded-full hover:bg-gray-100">&lt;</button>
-                    <h2 id="calendar-month-year" class="text-xl font-bold"></h2>
-                    <button id="next-month-btn" class="p-2 rounded-full hover:bg-gray-100">&gt;</button>
+            <div class="history-layout">
+                <div class="history-list-col" id="historyList"></div>
+                <div class="history-preview-col" id="historyPreview">
+                    <div style="align-self:center; color:var(--text-muted);">Select a transaction</div>
                 </div>
-                <div class="grid grid-cols-7 gap-4 text-center font-semibold text-gray-500 text-sm mb-2"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
-                <div id="calendar-grid"></div>
             </div>
         </div>
-        
+
+        <div id="inventory" class="view">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h1>Inventory Management</h1>
+                <button class="btn-lg" style="background:var(--success); width:auto; padding:0 20px;" onclick="Controller.openAddProductModal()">+ New Product</button>
+            </div>
+            <div style="background:var(--panel); border-radius:12px; border:1px solid var(--border); overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead style="background:var(--bg);"><tr><th style="text-align:left; padding:15px;">Item</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+                    <tbody id="invTableBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-        const firebaseConfig = { apiKey: "AIzaSyA_LRcHCkClvlHeqDPTSKfGa5gY2uiuZ5E", authDomain: "mi-planificador-privado.firebaseapp.com", projectId: "mi-planificador-privado", storageBucket: "mi-planificador-privado.firebasestorage.app", messagingSenderId: "792700686473", appId: "1:792700686473:web:8d1f41076f12fa0103f658" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let allTasks = [], isInitialLoad = true, unsubscribeTasks, taskToDeleteId = null, taskToEditId = null, timerInterval = null, currentView = 'list', currentSearchTerm = '', currentCategoryFilter = 'All', currentCalendarDate = new Date();
-        const categoryMap = { 'Personal': {color: 'bg-blue-100 text-blue-800', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`}, 'Work': {color: 'bg-purple-100 text-purple-800', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`}, 'School': {color: 'bg-green-100 text-green-800', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`}, 'Other': {color: 'bg-gray-200 text-gray-800', icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 8V5a2 2 0 012-2h2z"></path></svg>`} };
-        const categoryActiveMap = { 'Personal': 'bg-blue-500 text-white', 'Work': 'bg-purple-500 text-white', 'School': 'bg-green-500 text-white', 'Other': 'bg-gray-500 text-white' };
-        const categoryDotMap = { 'Personal': 'bg-blue-500', 'Work': 'bg-purple-500', 'School': 'bg-green-500', 'Other': 'bg-gray-400' };
-        const priorityFlagMap = { high: 'bg-red-500', medium: 'bg-yellow-500', low: 'bg-green-500' };
-
-        const DOMElements = {
-            loader: document.getElementById('loader'), appIndicator: document.getElementById('app-indicator'), indicatorText: document.getElementById('indicator-text'), authContainer: document.getElementById('auth-container'), plannerContainer: document.getElementById('planner-container'), calendarTooltip: document.getElementById('calendar-tooltip'),
-            userProfileName: document.getElementById('user-profile-name'), currentDate: document.getElementById('current-date'),
-            authError: document.getElementById('auth-error'), loginForm: document.getElementById('login-form'),
-            loginSuccessMessage: document.getElementById('login-success-message'), logoutSuccessMessage: document.getElementById('logout-success-message'), taskSuccessMessage: document.getElementById('task-success-message'),
-            confirmModal: document.getElementById('confirm-modal'), cancelDeleteBtn: document.getElementById('cancel-delete-btn'), confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
-            addTaskModal: document.getElementById('add-task-modal'), addTaskForm: document.getElementById('add-task-form'),
-            cancelAddTaskBtn: document.getElementById('cancel-add-task-btn'), addTaskText: document.getElementById('add-task-text'), addTaskDate: document.getElementById('add-task-date'),
-            addTaskTime: document.getElementById('add-task-time'), addTaskCategory: document.getElementById('add-task-category'), addTaskPriority: document.getElementById('add-task-priority'), addTaskTags: document.getElementById('add-task-tags'), addTaskRepeat: document.getElementById('add-task-repeat'), addTaskReminder: document.getElementById('add-task-reminder'), addTaskEmailToggleContainer: document.getElementById('add-email-toggle-container'), addTaskEmailToggle: document.getElementById('add-task-email-toggle'),
-            editModal: document.getElementById('edit-modal'), editTaskForm: document.getElementById('edit-task-form'), cancelEditBtn: document.getElementById('cancel-edit-btn'),
-            editTaskText: document.getElementById('edit-task-text'), editTaskDate: document.getElementById('edit-task-date'), editTaskTime: document.getElementById('edit-task-time'),
-            editTaskCategory: document.getElementById('edit-task-category'), editTaskPriority: document.getElementById('edit-task-priority'), editTaskNotes: document.getElementById('edit-task-notes'), editTaskTags: document.getElementById('edit-task-tags'),
-            taskListContainer: document.getElementById('task-list-container'), viewListBtn: document.getElementById('view-list-btn'), viewBoardBtn: document.getElementById('view-board-btn'), viewCalendarBtn: document.getElementById('view-calendar-btn'),
-            listViewContainer: document.getElementById('list-view-container'), kanbanViewContainer: document.getElementById('kanban-view-container'), kanbanBoard: document.getElementById('kanban-board'), calendarViewContainer: document.getElementById('calendar-view-container'),
-            searchInput: document.getElementById('searchInput'), searchResultsCounter: document.getElementById('search-results-counter'), categoryFilters: document.getElementById('category-filters'),
-            calendarGrid: document.getElementById('calendar-grid'), calendarMonthYear: document.getElementById('calendar-month-year'), prevMonthBtn: document.getElementById('prev-month-btn'), nextMonthBtn: document.getElementById('next-month-btn'),
-            dashboardNextTask: document.getElementById('dashboard-next-task'), dashboardPendingBreakdown: document.getElementById('dashboard-pending-breakdown'), dashboardOverdue: document.getElementById('dashboard-overdue'), dashboardOverdueCount: document.getElementById('dashboard-overdue-count'),
-            statsModal: document.getElementById('stats-modal'), statsModalCloseBtn: document.getElementById('stats-modal-close-btn'),
-            statsTotalCompleted: document.getElementById('stats-total-completed'), statsCompletionRate: document.getElementById('stats-completion-rate'),
-            statsCompletedThisWeek: document.getElementById('stats-completed-this-week'), statsCategoryBreakdown: document.getElementById('stats-category-breakdown'), deleteAllDataBtn: document.getElementById('delete-all-data-btn'),
-            headerStatsBtn: document.getElementById('header-stats-btn'), headerAddTaskBtn: document.getElementById('header-add-task-btn'), headerLogoutBtn: document.getElementById('header-logout-btn'),
-            headerTodayBtn: document.getElementById('header-today-btn'), todayPanel: document.getElementById('today-panel'), todayPanelContent: document.getElementById('today-panel-content'),
-            todayPanelCloseBtn: document.getElementById('today-panel-close-btn'),
-            headerSettingsBtn: document.getElementById('header-settings-btn'), 
-            settingsModal: document.getElementById('settings-modal'),
-            settingsModalCloseBtn: document.getElementById('settings-modal-close-btn'),
-            toggleShowCompleted: document.getElementById('toggle-show-completed'),
-            
-            // Re-added Calendar Modal Elements
-            calendarDayModal: document.getElementById('calendar-day-modal'),
-            calendarModalTitle: document.getElementById('calendar-modal-title'),
-            calendarModalTasks: document.getElementById('calendar-modal-tasks'),
-            calendarModalCloseBtn: document.getElementById('calendar-modal-close-btn'),
-
-            // New History Elements
-            historyModal: document.getElementById('history-modal'),
-            historyModalContent: document.getElementById('history-modal-content'),
-            historyModalCloseBtn: document.getElementById('history-modal-close-btn'),
-            editHistoryBtn: document.getElementById('edit-history-btn'),
-
-            // Logout Panel Elements
-            logoutPanel: document.getElementById('logout-panel'),
-            logoutUserName: document.getElementById('logout-user-name'),
-            confirmLogoutBtn: document.getElementById('confirm-logout-btn'),
-            cancelLogoutBtn: document.getElementById('cancel-logout-btn'),
-        };
-
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                DOMElements.authContainer.classList.add('hidden'); DOMElements.plannerContainer.classList.remove('hidden');
-                if (sessionStorage.getItem('loginJustOccurred')) { showFlashMessage(DOMElements.loginSuccessMessage, "Successfully logged in!"); sessionStorage.removeItem('loginJustOccurred'); }
-                const emailName = user.email.split('@')[0];
-                DOMElements.userProfileName.textContent = emailName;
-                DOMElements.logoutUserName.textContent = user.email; // For logout confirmation
-                loadTasks(user.uid); 
-                if (timerInterval) clearInterval(timerInterval);
-                timerInterval = setInterval(updateDynamicElements, 15000);
-            } else {
-                DOMElements.plannerContainer.classList.add('hidden'); DOMElements.authContainer.classList.remove('hidden');
-                if(unsubscribeTasks) unsubscribeTasks();
-                if (timerInterval) clearInterval(timerInterval); clearUI();
-            }
-            DOMElements.loader.classList.add('hidden');
-        });
-
-        async function loadTasks(userId) { 
-            isInitialLoad = true; 
-            refreshDynamicContent(); 
-            const tasksCollection = collection(db, "users", userId, "tasks"); 
-            if (unsubscribeTasks) unsubscribeTasks(); 
-            unsubscribeTasks = onSnapshot(query(tasksCollection, orderBy("date", "desc")), snapshot => { 
-                // Ensure 'history' property exists on all tasks for safety
-                allTasks = snapshot.docs.map(doc => ({ 
-                    id: doc.id, 
-                    ...doc.data(), 
-                    subtasks: doc.data().subtasks || [], 
-                    notes: doc.data().notes || '',
-                    history: doc.data().history || [] // Initialize history array
-                })); 
-                if (isInitialLoad) { isInitialLoad = false; } refreshDynamicContent(); 
-            }); 
-        }
+<div class="modal-overlay" id="txnDetailModal">
+    <div class="modal detail-modal">
+        <div style="background:#eee; padding:20px; border-radius:8px; overflow-y:auto; display:flex; justify-content:center;">
+            <div id="detail-receipt-preview"></div>
+        </div>
         
-        // Helper to find differences for history logging
-        function getChanges(oldTask, newTask) {
-            const changes = [];
-            const fields = ['text', 'date', 'time', 'priority', 'category'];
+        <div class="detail-info-pane">
+            <h2 style="margin-bottom:20px;">Transaction Details</h2>
             
-            fields.forEach(field => {
-                const oldValue = oldTask[field] || 'None';
-                const newValue = newTask[field] || 'None';
-                
-                // Special handling for time format display
-                let oldDisplay = field === 'time' && oldValue !== 'None' ? formatTo12Hour(oldValue) : oldValue;
-                let newDisplay = field === 'time' && newValue !== 'None' ? formatTo12Hour(newValue) : newValue;
+            <div class="info-row"><span>Transaction ID</span><strong id="dt-id">...</strong></div>
+            <div class="info-row"><span>Date</span><span id="dt-date">...</span></div>
+            <div class="info-row"><span>Status</span><span id="dt-status">...</span></div>
+            <div class="info-row"><span>Payment Method</span><span id="dt-method">...</span></div>
+            
+            <h4 style="margin-top:20px; color:var(--text-muted);">Financials</h4>
+            <div class="info-row"><span>Subtotal</span><span id="dt-sub">...</span></div>
+            <div class="info-row"><span>Tax</span><span id="dt-tax">...</span></div>
+            <div class="info-row"><span>Total</span><strong id="dt-total">...</strong></div>
 
-                if (oldValue !== newValue && newValue !== undefined) {
-                    changes.push({ 
-                        field: field.charAt(0).toUpperCase() + field.slice(1), 
-                        oldValue: oldDisplay, 
-                        newValue: newDisplay 
-                    });
-                }
+            <div style="margin-top:auto;">
+                <div id="dt-warning" style="background:#fffbeb; color:#b45309; padding:10px; border-radius:8px; font-size:0.9rem; margin-bottom:10px; display:none;">
+                    ⚠️ This transaction has already been modified.
+                </div>
+                <button class="btn-lg" id="dt-action-btn" style="background:var(--primary);">Process Return / Exchange</button>
+                <button style="width:100%; margin-top:10px; padding:10px; background:none; border:none; color:var(--text-muted);" onclick="Utils.closeModal('txnDetailModal')">Close Window</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="payModal">
+    <div class="modal">
+        <h2 style="text-align:center;" id="payModalTitle">Confirm Payment</h2>
+        <div id="pay-summary-txt" style="text-align:center; margin:10px 0; color:var(--text-muted);"></div>
+        <h1 style="text-align:center; margin-bottom:20px;" id="payModalTotal">$0.00</h1>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button class="btn-lg" style="background:var(--bg); color:black; border:1px solid #ccc;" onclick="Controller.finalizeTransaction('Card')">💳 Card</button>
+            <button class="btn-lg" style="background:var(--bg); color:black; border:1px solid #ccc;" onclick="Controller.finalizeTransaction('Cash')">💵 Cash</button>
+        </div>
+        <button style="margin-top:20px; background:none; border:none; color:var(--text-muted);" onclick="Utils.closeModal('payModal')">Cancel</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="receiptModal">
+    <div class="modal" style="width:400px;">
+        <h3 style="text-align:center; color:var(--success); margin-bottom:10px;">Success!</h3>
+        <div id="receipt-content"></div>
+        <button class="btn-lg btn-pay" style="margin-top:20px;" onclick="Utils.closeModal('receiptModal'); Controller.startNewTransaction();">Start New Sale</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addProductModal">
+    <div class="modal">
+        <h2>Add Product</h2>
+        <input id="n-name" class="search-input" style="margin-top:10px;" placeholder="Product Name">
+        <input id="n-cat" class="search-input" style="margin-top:10px;" placeholder="Category">
+        <input id="n-price" type="number" class="search-input" style="margin-top:10px;" placeholder="Price ($)">
+        <input id="n-stock" type="number" class="search-input" style="margin-top:10px;" placeholder="Stock">
+        <button class="btn-lg btn-pay" style="margin-top:20px;" onclick="Controller.saveProduct()">Save Item</button>
+        <button style="margin-top:10px; background:none; border:none;" onclick="Utils.closeModal('addProductModal')">Cancel</button>
+    </div>
+</div>
+
+<div id="toast-box"></div>
+
+<script>
+    const CONFIG = { TAX_RATE: 0.08, CURRENCY: 'USD', KEYS: { INV:'v13_inv', SALES:'v13_sales', PS:'v13_ps', THEME:'v13_theme' } };
+    
+    const State = {
+        inventory: [], cart: [], sales: [], psQueue: [],
+        currentTxn: { id: "", editRefId: null, originalSnapshot: null, originalTotal: 0 },
+        filter: "All"
+    };
+
+    const Utils = {
+        fmt: (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: CONFIG.CURRENCY }).format(n),
+        genId: (pre) => `${pre}-${Math.floor(100000 + Math.random() * 900000)}`,
+        load: () => {
+            State.inventory = JSON.parse(localStorage.getItem(CONFIG.KEYS.INV)) || [{id:1,name:"Pen",price:1.5,cat:"Office",stock:100,icon:"🖊️"}];
+            State.sales = JSON.parse(localStorage.getItem(CONFIG.KEYS.SALES)) || [];
+            State.psQueue = JSON.parse(localStorage.getItem(CONFIG.KEYS.PS)) || [];
+            if(localStorage.getItem(CONFIG.KEYS.THEME)==='dark') document.documentElement.setAttribute('data-theme','dark');
+        },
+        save: () => {
+            localStorage.setItem(CONFIG.KEYS.INV, JSON.stringify(State.inventory));
+            localStorage.setItem(CONFIG.KEYS.SALES, JSON.stringify(State.sales));
+            localStorage.setItem(CONFIG.KEYS.PS, JSON.stringify(State.psQueue));
+            View.updateDash(); View.renderHistory();
+        },
+        toast: (m,t='success') => {
+            const d = document.createElement('div'); d.className='toast';
+            d.style.borderLeftColor = `var(--${t==='error'?'danger':t==='warning'?'warning':'success'})`;
+            d.innerHTML = `<span>${m}</span>`; document.getElementById('toast-box').appendChild(d);
+            setTimeout(()=>d.remove(),3000);
+        },
+        toggleTheme: () => {
+            const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+            document.documentElement.setAttribute('data-theme',t); localStorage.setItem(CONFIG.KEYS.THEME,t);
+        },
+        resetData: () => { if(confirm("Reset all data?")) { localStorage.clear(); location.reload(); } },
+        closeModal: (id) => document.getElementById(id).style.display='none',
+        openModal: (id) => document.getElementById(id).style.display='flex'
+    };
+
+    const View = {
+        init: () => { View.renderCats(); View.renderGrid(); View.renderInv(); View.renderPS(); View.updateDash(); View.renderHistory(); },
+        
+        renderCats: () => {
+            const cats = ["All", ...new Set(State.inventory.map(i=>i.cat))];
+            document.getElementById('categoryList').innerHTML = cats.map(c=>`<button class="cat-pill ${c===State.filter?'active':''}" onclick="Controller.setFilter('${c}',this)">${c}</button>`).join('');
+        },
+        renderGrid: (term="") => {
+            const g = document.getElementById('productGrid'); g.innerHTML = "";
+            State.inventory.filter(i=>(State.filter==="All"||i.cat===State.filter) && i.name.toLowerCase().includes(term.toLowerCase())).forEach(i=>{
+                g.innerHTML += `<div class="card ${i.stock<=0?'disabled':''}" onclick="Controller.addToCart(${i.id})">
+                    <span class="stock-tag ${i.stock>0?'stock-ok':'stock-low'}">${i.stock} Left</span>
+                    <div style="font-size:2rem; margin:10px 0;">${i.icon||'📦'}</div>
+                    <div style="font-weight:600; font-size:0.85rem;">${i.name}</div>
+                    <div style="font-size:0.9rem; color:var(--primary); font-weight:bold;">${Utils.fmt(i.price)}</div>
+                </div>`;
             });
-            return changes;
-        }
-
-        async function crudOperation(action, data) { 
-            const user = auth.currentUser; 
-            if (!user) return; 
-            const { id, ...payload } = data; 
-            
-            // Handle Edit History Logging
-            if (action === 'update') {
-                const oldTask = allTasks.find(t => t.id === id);
-                // Only log history if we are updating a saved task AND it's not just a completion toggle
-                if (oldTask && payload.completed === undefined) { 
-                    const changes = getChanges(oldTask, payload);
-                    if (changes.length > 0) {
-                        const newHistoryEntry = {
-                            timestamp: new Date().toISOString(),
-                            changes: changes,
-                            action: 'Edited'
-                        };
-                        
-                        // Pass back the new history array to be saved
-                        payload.history = [...(oldTask.history || []), newHistoryEntry];
-                    }
-                }
-            }
-
-            showIndicator("Saving...", "info", true); 
-            
-            try { 
-                if (action === 'add') await addDoc(collection(db, "users", user.uid, "tasks"), { ...payload, history: [] }); // Ensure history is initialized for new tasks
-                else if (action === 'update') await updateDoc(doc(db, "users", user.uid, "tasks", id), payload); 
-                else if (action === 'delete') await deleteDoc(doc(db, "users", user.uid, "tasks", id)); 
-                
-                const successMessage = action === 'add' ? 'Task Added' : action === 'update' ? 'Changes Saved' : 'Task Deleted';
-                showIndicator(successMessage, "success", false, 3000); 
-
-            } catch (error) { 
-                console.error("Firestore Error:", error); 
-                showIndicator("Error! Failed to save.", "warning", false, 4000);
-            }
-        }
-        
-        function refreshDynamicContent() { 
-            const filteredTasks = getFilteredTasks(); 
-            if(currentSearchTerm || currentCategoryFilter !== 'All') { 
-                const count = filteredTasks.length; 
-                DOMElements.searchResultsCounter.textContent = `${count} result${count !== 1 ? 's' : ''}`; 
-                DOMElements.searchResultsCounter.classList.remove('hidden'); 
-            } else { 
-                DOMElements.searchResultsCounter.classList.add('hidden'); 
-            } 
-            if (currentView === 'list') renderListView(filteredTasks); 
-            else if (currentView === 'board') renderKanbanView(filteredTasks); 
-            else renderCalendarView(filteredTasks); 
-            updateDashboard(filteredTasks); 
-            updateDynamicElements(); 
-        }
-        
-        function getFilteredTasks() { 
-            const now = new Date();
-            const showCompleted = DOMElements.toggleShowCompleted ? DOMElements.toggleShowCompleted.checked : true;
-
-            return allTasks
-                .filter(task => {
-                    if (!showCompleted && task.completed && task.completedAt) {
-                        const completedDate = new Date(task.completedAt);
-                        completedDate.setHours(23, 59, 59, 999);
-                        return now <= completedDate; 
-                    }
-                    return true;
-                })
-                .filter(task => (task.text.toLowerCase().includes(currentSearchTerm.toLowerCase()) || (task.tags && task.tags.some(tag => tag.toLowerCase().includes(currentSearchTerm.toLowerCase())))) && (currentCategoryFilter === 'All' || task.category === currentCategoryFilter)); 
-        }
-
-        function renderListView(tasks) {
-            DOMElements.taskListContainer.innerHTML = '';
-            if (isInitialLoad) { DOMElements.taskListContainer.innerHTML = `<div class="space-y-4"><div class="task-item p-4"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-meta"></div></div><div class="task-item p-4"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-meta"></div></div><div class="task-item p-4"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-meta"></div></div></div>`; return; }
-            if (tasks.length === 0) { DOMElements.taskListContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900">All caught up!</h3><p class="mt-1 text-sm text-gray-500">You have no pending tasks.</p></div>`; return; }
-            const groupedTasks = tasks.reduce((acc, task) => { const group = getRelativeDateGroup(task.date); if (!acc[group]) acc[group] = []; acc[group].push(task); return acc; }, {});
-            const groupOrder = ["Overdue", "Today", "Tomorrow"];
-            const sortedGroupKeys = Object.keys(groupedTasks).sort((a, b) => { const aIndex = groupOrder.indexOf(a); const bIndex = groupOrder.indexOf(b); if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex; if (aIndex !== -1) return -1; if (bIndex !== -1) return 1; return new Date(a.split(', ')[1]) - new Date(b.split(', ')[1]); });
-            sortedGroupKeys.forEach(groupName => {
-                const tasksInGroup = groupedTasks[groupName];
-                tasksInGroup.sort((a, b) => (a.completed - b.completed) || (new Date(`${a.date}T${a.time || '00:00'}`) - new Date(`${b.date}T${b.time || '00:00'}`)));
-                const completedCount = tasksInGroup.filter(t => t.completed).length;
-                const totalCount = tasksInGroup.length;
-                const groupSection = document.createElement('div'); groupSection.className = 'animate-fade-in';
-                groupSection.innerHTML = `<div><h3 class="text-xl font-bold text-gray-700">${groupName}</h3><span class="font-semibold text-gray-400 text-xs mt-1 block">${completedCount} of ${totalCount} completed</span></div><ul class="space-y-4 mt-2">${tasksInGroup.map(createTaskElement).join('')}</ul>`;
-                DOMElements.taskListContainer.appendChild(groupSection);
+        },
+        renderCart: () => {
+            const l = document.getElementById('cartList'); l.innerHTML = ""; let sub = 0;
+            if(State.cart.length===0) l.innerHTML=`<div style="text-align:center; margin-top:20px; color:var(--text-muted);">Cart Empty</div>`;
+            State.cart.forEach(i => {
+                sub += i.price * i.qty;
+                l.innerHTML += `<div class="cart-item"><div><b>${i.name}</b><br><small>${Utils.fmt(i.price)}</small></div>
+                <div class="qty-box"><button class="qty-btn" onclick="Controller.modQty(${i.id},-1)">-</button><span>${i.qty}</span><button class="qty-btn" onclick="Controller.modQty(${i.id},1)">+</button></div></div>`;
             });
-            attachDynamicListeners(DOMElements.taskListContainer);
-        }
-        
-        function updateDashboard(tasks) { if(isInitialLoad) return; const pendingTasks = tasks.filter(t => !t.completed); const now = new Date(); const todayString = now.toISOString().split('T')[0]; const todayPendingCount = pendingTasks.filter(t => t.date === todayString).length; DOMElements.currentDate.innerHTML = `${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})} <span id="today-task-counter" class="text-gray-400 font-normal ml-2"></span>`; document.getElementById('today-task-counter').textContent = todayPendingCount > 0 ? `(${todayPendingCount} tasks left)`: '(No tasks for today)'; const upcomingTasks = pendingTasks.map(t => ({ ...t, dateTime: new Date(`${t.date}T${t.time || '23:59:59'}`) })).filter(t => t.dateTime >= now).sort((a, b) => a.dateTime - b.dateTime); if (upcomingTasks.length > 0) { const firstTask = upcomingTasks[0]; const firstDueTime = firstTask.dateTime.getTime(); const allNextTasks = upcomingTasks.filter(t => t.dateTime.getTime() === firstDueTime); DOMElements.dashboardNextTask.innerHTML = `<div class="text-left">${allNextTasks.map(task => `<p class="font-bold text-lg text-indigo-600 break-words">${task.text}</p>`).join('')}<p class="text-sm text-gray-500 mt-1">${getRelativeDateGroup(firstTask.date)} ${firstTask.time ? `at ${formatTo12Hour(firstTask.time)}` : ''}</p></div>`; } else { DOMElements.dashboardNextTask.innerHTML = `<p class="text-gray-400 text-center">No upcoming tasks!</p>`; } DOMElements.dashboardPendingBreakdown.innerHTML = `<div class="flex justify-between"><span>Today:</span> <span class="font-bold">${todayPendingCount}</span></div> <div class="flex justify-between"><span>This Week:</span> <span class="font-bold">${pendingTasks.filter(t => { const d = new Date(t.date); const endOfWeek = new Date(now); endOfWeek.setDate(now.getDate() + 6 - now.getDay()); return d > now && d <= endOfWeek; }).length}</span></div> <div class="flex justify-between"><span>This Month:</span> <span class="font-bold">${pendingTasks.filter(t => { const d = new Date(t.date); const endOfWeek = new Date(now); endOfWeek.setDate(now.getDate() + 6 - now.getDay()); const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); return d > endOfWeek && d <= endOfMonth; }).length}</span></div>`; const overdueTasks = pendingTasks.map(t => ({ ...t, dateTime: new Date(`${t.date}T${t.time || '23:59:59'}`) })).filter(t => t.dateTime < now).sort((a, b) => a.dateTime - b.dateTime); DOMElements.dashboardOverdueCount.textContent = overdueTasks.length; if (overdueTasks.length > 0) { DOMElements.dashboardOverdue.innerHTML = `<ul class="space-y-1 text-left">${overdueTasks.slice(0, 3).map(task => `<li class="font-semibold text-red-500 truncate">${task.text}</li>`).join('')}</ul>`; } else { DOMElements.dashboardOverdue.innerHTML = `<p class="text-gray-400 text-center">No overdue tasks!</p>`; } }
-        function createTaskElement(task) { 
-            const taskDateTime = new Date(`${task.date}T${task.time || '23:59:59'}`); 
-            let timeDiffHtml = !task.completed ? `<span class="relative-time" data-datetime="${taskDateTime.toISOString()}"></span>` : ''; 
-            const completedAtHtml = task.completed && task.completedAt ? `<div class="completion-timestamp text-green-600 font-semibold mt-1 text-xs flex items-center gap-1 pl-8"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Completed: ${new Date(task.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${formatTo12Hour(new Date(task.completedAt).toTimeString())}</span></div>` : ''; 
-            
-            const subtasksHtml = (task.subtasks || []).map((sub, index) => `<div class="flex items-center justify-between gap-2 ml-4"><div class="flex items-start gap-2 flex-1"><input type="checkbox" id="subtask-${task.id}-${index}" data-subtask-index="${index}" class="subtask-checkbox h-4 w-4 mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${sub.completed ? 'checked' : ''}><div class="flex-1"><label for="subtask-${task.id}-${index}" class="text-sm ${sub.completed ? 'completed task-title-completed' : ''}">${sub.text}</label>${sub.completed && sub.completedAt ? `<div class="text-xs text-gray-400 completion-timestamp">Completed: ${new Date(sub.completedAt).toLocaleDateString('en-US', {month:'short',day:'numeric'})} at ${formatTo12Hour(new Date(sub.completedAt).toTimeString())}</div>` : ''}</div></div><div class="flex-shrink-0"><button class="edit-subtask-btn p-1 rounded-full hover:bg-gray-200" data-task-id="${task.id}" data-subtask-index="${index}"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button class="delete-subtask-btn p-1 rounded-full hover:bg-gray-200" data-task-id="${task.id}" data-subtask-index="${index}"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div>`).join(''); 
-            
-            const subtaskProgress = task.subtasks && task.subtasks.length > 0 ? `(${task.subtasks.filter(s=>s.completed).length}/${task.subtasks.length})` : ''; 
-            const categoryClass = categoryMap[task.category].color || categoryMap['Other'].color; 
-            const hasNotes = task.notes && task.notes.trim() !== ''; 
-            const hasSubtasks = task.subtasks && task.subtasks.length > 0; 
-            const noteSnippet = hasNotes ? task.notes.substring(0, 40) + (task.notes.length > 40 ? '...' : '') : ''; 
-            const subtaskIndicatorHtml = hasSubtasks ? `<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>` : ''; 
-            
-            // NEW: Reminder indicator
-            const reminderIndicator = task.reminder && task.reminder !== 'none' ? `<svg class="w-4 h-4 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Reminder set"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1"></path></svg>` : '';
-
-            // Conditional Edit History Button
-            const editHistoryButton = (task.history && task.history.length > 0) 
-                ? `<button class="show-history-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit History" data-task-id="${task.id}"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>`
-                : '';
-
-            return `<li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" data-datetime="${taskDateTime.toISOString()}"><div class="flex items-start justify-between p-4"><div class="flex items-start gap-3 flex-grow min-w-0"><input type="checkbox" class="task-checkbox h-5 w-5 rounded border-gray-300 text-indigo-600 flex-shrink-0 mt-1 focus:ring-indigo-500" ${task.completed ? 'checked' : ''}><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span><span class="flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-full ${categoryClass}">${categoryMap[task.category].icon} ${task.category}</span>${reminderIndicator}<span class="font-medium break-words ${task.completed ? 'task-title-completed' : ''}">${task.text}</span></div><div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${task.completed ? 'completed' : ''}"><span>${taskDateTime.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} ${formatTo12Hour(task.time)}</span>${!task.completed ? `<span class="mx-1">•</span> ${timeDiffHtml}` : ''}${hasNotes ? `<div class="flex items-center gap-1 text-gray-400" title="${task.notes}"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg><span class="truncate italic">${noteSnippet}</span></div>`: ''}${hasSubtasks ? subtaskIndicatorHtml : ''}</div> ${completedAtHtml} </div></div><div class="flex items-center flex-shrink-0 ml-2">${editHistoryButton}<button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="edit-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button class="delete-btn text-gray-500 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100" title="Delete"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div><div class="details-container px-4"><div class="notes-container border-t pt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><textarea class="task-notes-textarea" placeholder="Click to add notes...">${task.notes || ''}</textarea></div><div class="subtask-container border-t pt-4 mt-4"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Subtasks ${subtaskProgress}</h4><div class="space-y-2">${subtasksHtml}<div class="grid grid-cols-3 gap-2 pt-2"><input type="text" class="new-subtask-input col-span-2 bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="New subtask..."><input type="date" class="new-subtask-date-input bg-gray-100 rounded px-2 py-1 text-sm border focus:outline-none focus:ring-1 focus:ring-indigo-500"><button class="add-subtask-btn col-span-3 mt-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 rounded">Add Subtask</button></div></div></div></div><div class="subtask-alert text-red-500 text-xs font-bold mt-2 px-4 pb-2 hidden"></div></li>`; }
-        function renderKanbanView(tasks) { DOMElements.kanbanBoard.innerHTML = '<p class="text-center text-sm text-gray-500 mb-4 col-span-full">Drag and drop tasks to change their category.</p>'; const columns = { 'Personal': [], 'Work': [], 'School': [], 'Other': [] }; tasks.forEach(task => { if (columns[task.category]) { columns[task.category].push(task); }}); for (const category in columns) { const columnEl = document.createElement('div'); columnEl.className = 'kanban-column'; columnEl.dataset.category = category; columnEl.innerHTML = `<h3 class="kanban-column-title">${categoryMap[category].icon} ${category}</h3><div class="kanban-tasks"></div>`; const tasksContainer = columnEl.querySelector('.kanban-tasks'); columns[category].forEach(task => { const cardEl = document.createElement('div'); cardEl.className = 'kanban-card'; cardEl.dataset.id = task.id; cardEl.draggable = true; cardEl.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5 text-gray-400 cursor-grab flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg><span class="flex-grow">${task.text}</span></div>`; tasksContainer.appendChild(cardEl); }); DOMElements.kanbanBoard.appendChild(columnEl); } }
-
-        // --- CALENDAR VIEW LOGIC ---
-
-        function getTaskSummaryBadges(task) {
-            const priorityFlag = `<span class="priority-flag ${priorityFlagMap[task.priority] || 'bg-gray-400'}"></span>`;
-            const categoryBadge = `<span class="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${categoryMap[task.category]?.color || categoryMap['Other'].color}">${categoryMap[task.category]?.icon || categoryMap['Other'].icon} ${task.category}</span>`;
-            const timeDisplay = task.time ? `<span class="text-gray-500 text-xs">${formatTo12Hour(task.time)}</span>` : '';
-            const reminderIndicator = task.reminder && task.reminder !== 'none' ? `<svg class="w-4 h-4 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Reminder set"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1"></path></svg>` : '';
-
-            return { priorityFlag, categoryBadge, timeDisplay, reminderIndicator };
-        }
-
-        // Updated renderCalendarView to apply urgency classes to the day box
-        function renderCalendarView() { 
-            const m = currentCalendarDate.getMonth(), y = currentCalendarDate.getFullYear(); 
-            DOMElements.calendarGrid.innerHTML = ''; 
-            DOMElements.calendarMonthYear.textContent = new Date(y, m).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); 
-            const firstDay = new Date(y, m, 1).getDay(), daysInMonth = new Date(y, m + 1, 0).getDate(); 
-            const filteredTasks = getFilteredTasks();
-            
-            for (let i = 0; i < firstDay; i++) DOMElements.calendarGrid.insertAdjacentHTML('beforeend', `<div class="calendar-day other-month"></div>`); 
-            
-            for (let d = 1; d <= daysInMonth; d++) { 
-                const dateString = new Date(y, m, d).toISOString().split('T')[0];
-                const dayEl = document.createElement('div'); 
-                dayEl.className = 'calendar-day'; 
-                dayEl.dataset.date = dateString; 
-
-                const today = new Date(); 
-                if (d === today.getDate() && m === today.getMonth() && y === today.getFullYear()) dayEl.classList.add('is-today'); 
-                
-                const tasksOnDay = filteredTasks.filter(t => t.date === dateString);
-
-                const headerEl = document.createElement('div'); 
-                headerEl.className = 'calendar-day-header'; 
-                headerEl.textContent = d; 
-                dayEl.appendChild(headerEl); 
-                
-                const tasksContainer = document.createElement('div'); 
-                tasksContainer.className = 'flex flex-wrap pointer-events-none justify-center'; 
-                tasksOnDay.slice(0, 9).forEach(task => { 
-                    tasksContainer.innerHTML += `<span class="task-dot ${categoryDotMap[task.category] || 'bg-gray-400'}" title="${task.text}"></span>`; 
-                }); 
-                dayEl.appendChild(tasksContainer); 
-                DOMElements.calendarGrid.appendChild(dayEl); 
-            }
-        }
-
-        // Updated to use the Modal Pop-up
-        function handleCalendarDayClick(e) { 
-            const dayEl = e.target.closest('.calendar-day:not(.other-month)'); 
-            if (!dayEl) return; 
-
-            const dateString = dayEl.dataset.date;
-            const date = new Date(dateString + 'T00:00:00'); 
-            
-            const tasks = allTasks
-                .filter(t => t.date === dateString)
-                .sort((a, b) => (new Date(`${a.date}T${a.time || '23:59:59'}`) - new Date(`${b.date}T${b.time || '23:59:59'}`)));
-
-            DOMElements.calendarModalTitle.textContent = `Tasks for ${date.toLocaleDateString('en-US', { dateStyle: 'full' })}`; 
-            DOMElements.calendarModalTasks.innerHTML = tasks.length 
-                ? tasks.map(t => {
-                    const { priorityFlag, categoryBadge, timeDisplay, reminderIndicator } = getTaskSummaryBadges(t);
-                    const taskDateTime = new Date(`${t.date}T${t.time || '23:59:59'}`);
-                    
-                    // Determine task urgency classes for pulsing inside the modal
-                    let urgencyClasses = '';
-                    if (!t.completed) {
-                        const now = new Date();
-                        const diffHours = (taskDateTime.getTime() - now.getTime()) / 3600000;
-                        if (diffHours < 0) {
-                            urgencyClasses = 'pulse-overdue';
-                        } else if (diffHours <= 1) {
-                            urgencyClasses = 'pulse-due-soon';
-                        }
-                    }
-
-                    // Conditional Edit History Button
-                    const editHistoryButton = (t.history && t.history.length > 0) 
-                        ? `<button class="show-history-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Edit History" data-task-id="${t.id}"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>`
-                        : '';
-
-                    // Notes/Details HTML
-                    const notesHtml = t.notes ? `<div class="notes-container pt-4 border-t"><h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Notes</h4><p class="text-sm text-gray-700 whitespace-pre-wrap">${t.notes}</p></div>` : '';
-                    
-                    return `
-                        <div class="calendar-task-item p-3 ${t.completed ? 'completed opacity-90' : 'bg-white'} flex flex-col gap-2 shadow-sm border border-gray-100 ${urgencyClasses}" data-id="${t.id}" data-datetime="${taskDateTime.toISOString()}">
-                            <div class="flex items-start justify-between">
-                                <div class="flex items-start gap-3 flex-grow min-w-0">
-                                    <input type="checkbox" class="task-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 flex-shrink-0 mt-1 focus:ring-indigo-500" ${t.completed ? 'checked' : ''} data-id="${t.id}">
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            ${priorityFlag}
-                                            ${categoryBadge}
-                                            ${reminderIndicator}
-                                            <span class="font-medium break-words ${t.completed ? 'task-title-completed text-gray-500' : 'text-gray-800'}">${t.text}</span>
-                                        </div>
-                                        <div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap pl-8 ${t.completed ? 'completed' : ''}">
-                                            <span>${timeDisplay}</span>
-                                            ${!t.completed ? `<span class="mx-1">•</span> <span class="relative-time" data-datetime="${taskDateTime.toISOString()}"></span>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center flex-shrink-0 ml-2">
-                                    ${editHistoryButton}
-                                    <button class="details-btn text-gray-500 hover:text-indigo-600 p-1.5 rounded-full hover:bg-gray-100" title="Details"><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-                                </div>
-                            </div>
-                            <div class="details-container px-4">
-                                ${notesHtml}
-                            </div>
-                        </div>
-                    `;
-                }).join('') 
-                : '<p class="text-gray-500">No tasks for this day.</p>'; 
-
-            // Attach listeners for interaction within the modal
-            attachDynamicListeners(DOMElements.calendarModalTasks);
-
-            DOMElements.calendarDayModal.classList.remove('hidden');
-            updateDynamicElements(); // Apply pulsing urgency colors for tasks inside the modal
-        }
-        // --- END CALENDAR VIEW LOGIC ---
-
-        // --- NEW showHistoryModal function implementation (Updated Layout) ---
-        function showHistoryModal(taskId) {
-            const task = allTasks.find(t => t.id === taskId);
-            const historyContent = DOMElements.historyModalContent;
-            
-            if (!task || !task.history || task.history.length === 0) {
-                 historyContent.innerHTML = '<p class="text-gray-500">No edit history recorded for this task.</p>';
+            const tot = sub * (1+CONFIG.TAX_RATE);
+            document.getElementById('total-disp').innerText = Utils.fmt(tot);
+            View.updatePayBtn(tot);
+        },
+        updatePayBtn: (tot) => {
+            const b = document.getElementById('payBtn');
+            if(State.currentTxn.editRefId) {
+                const diff = tot - State.currentTxn.originalTotal;
+                if(Math.abs(diff)<0.01) { b.innerText="NO CHARGE"; b.style.background="var(--text-muted)"; }
+                else if(diff>0) { b.innerText=`PAY ${Utils.fmt(diff)}`; b.style.background="var(--success)"; }
+                else { b.innerText=`REFUND ${Utils.fmt(Math.abs(diff))}`; b.style.background="var(--danger)"; }
+                b.disabled=false;
             } else {
-                // Reverse the array to show most recent changes first
-                const reversedHistory = [...task.history].reverse();
-
-                historyContent.innerHTML = reversedHistory.map(entry => {
-                    const timestamp = new Date(entry.timestamp).toLocaleString();
-                    const changeDetails = entry.changes.map(change => 
-                        `<div class="history-change">
-                            <span class="font-medium text-gray-600">${change.field}</span>
-                            <span>
-                                <span class="history-old">${change.oldValue}</span>
-                                <svg class="w-4 h-4 inline-block text-gray-400 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                                <span class="history-new">${change.newValue}</span>
-                            </span>
-                        </div>`
-                    ).join('');
-
-                    return `
-                        <div class="history-card">
-                            <p class="font-bold text-gray-800">${entry.action || 'Edited'}</p>
-                            <p class="text-xs text-gray-500 mb-4">${timestamp}</p>
-                            <div class="space-y-1">${changeDetails}</div>
-                        </div>
-                    `;
-                }).join('');
+                b.innerText = tot<=0 ? "PAY $0.00" : `PAY ${Utils.fmt(tot)}`;
+                b.disabled = tot<=0; b.style.background="var(--success)";
             }
+        },
+        
+        // --- NEW: PREVIEW & DETAILS ---
+        previewTxn: (sale) => {
+            // Populate Right Pane (Data)
+            document.getElementById('dt-id').innerText = sale.id;
+            document.getElementById('dt-date').innerText = new Date(sale.date).toLocaleString();
+            document.getElementById('dt-status').innerText = sale.status;
+            document.getElementById('dt-status').style.color = sale.status==='Modified' ? 'var(--warning)' : 'var(--success)';
+            document.getElementById('dt-method').innerText = sale.method;
+            
+            document.getElementById('dt-sub').innerText = Utils.fmt(sale.subtotal);
+            document.getElementById('dt-tax').innerText = Utils.fmt(sale.tax);
+            document.getElementById('dt-total').innerText = Utils.fmt(sale.total);
 
-            DOMElements.historyModal.classList.remove('hidden');
-        }
+            // Populate Left Pane (Receipt)
+            document.getElementById('detail-receipt-preview').innerHTML = View.genReceipt(sale);
 
-        // ... (rest of the functions remain the same)
-
-        function showEditModal(taskId) { 
-            taskToEditId = taskId; 
-            const task = allTasks.find(t => t.id === taskId); 
-            if(task) { 
-                DOMElements.editTaskText.value = task.text; 
-                DOMElements.editTaskDate.value = task.date; 
-                DOMElements.editTaskTime.value = task.time || ''; 
-                DOMElements.editTaskCategory.value = task.category; 
-                DOMElements.editTaskPriority.value = task.priority || 'medium'; 
-                DOMElements.editTaskNotes.value = task.notes || ''; 
-                DOMElements.editTaskTags.value = task.tags ? task.tags.join(', ') : ''; 
-                
-                // Conditional display of history button
-                if (task.history && task.history.length > 0) {
-                    DOMElements.editHistoryBtn.classList.remove('hidden');
-                } else {
-                    DOMElements.editHistoryBtn.classList.add('hidden');
-                }
-                
-                DOMElements.editModal.classList.remove('hidden'); 
-            } 
-        }
-
-        async function handleEditTask(e) { 
-            e.preventDefault(); 
-            const task = allTasks.find(t => t.id === taskToEditId); 
-            if (task) { 
-                // Collect ALL fields being edited
-                const newTaskData = { 
-                    id: taskToEditId, 
-                    text: DOMElements.editTaskText.value, 
-                    date: DOMElements.editTaskDate.value, 
-                    time: DOMElements.editTaskTime.value, 
-                    category: DOMElements.editTaskCategory.value, 
-                    priority: DOMElements.editTaskPriority.value, 
-                    notes: DOMElements.editTaskNotes.value, 
-                    tags: parseTags(DOMElements.editTaskTags.value) 
+            // Handle Action Button
+            const btn = document.getElementById('dt-action-btn');
+            const warn = document.getElementById('dt-warning');
+            if(sale.status === 'Modified') {
+                btn.style.display = 'none';
+                warn.style.display = 'block';
+            } else {
+                btn.style.display = 'block';
+                warn.style.display = 'none';
+                btn.onclick = () => {
+                    Utils.closeModal('txnDetailModal');
+                    Controller.loadReturnToPOS(sale.id);
                 };
+            }
+            Utils.openModal('txnDetailModal');
+        },
 
-                // Preserve existing recurrence and reminder properties unless explicitly added to modal.
-                // For this scenario, we merge old and new data, letting the new data overwrite.
-                await crudOperation('update', { ...task, ...newTaskData }); 
-                hideEditModal(); 
-            } 
-        }
-
-        // ... (rest of updateDynamicElements and other functions remains the same)
-
-        function setupEventListeners() { 
-            DOMElements.headerStatsBtn.addEventListener('click', calculateAndShowStats); 
-            DOMElements.headerAddTaskBtn.addEventListener('click', showAddTaskModal); 
-            
-            // Logout confirmation panel toggle
-            DOMElements.headerLogoutBtn.addEventListener('click', () => DOMElements.logoutPanel.classList.toggle('hidden'));
-            DOMElements.confirmLogoutBtn.addEventListener('click', handleLogout); 
-            DOMElements.cancelLogoutBtn.addEventListener('click', () => DOMElements.logoutPanel.classList.add('hidden'));
-
-            DOMElements.headerTodayBtn.addEventListener('click', handleTodayClick); 
-            
-            DOMElements.headerSettingsBtn.addEventListener('click', () => { 
-                DOMElements.settingsModal.classList.remove('hidden'); 
-            });
-            DOMElements.settingsModalCloseBtn.addEventListener('click', () => { 
-                DOMElements.settingsModal.classList.add('hidden'); 
-            });
-            DOMElements.toggleShowCompleted.addEventListener('change', refreshDynamicContent);
-
-            DOMElements.todayPanelCloseBtn.addEventListener('click', () => { 
-                DOMElements.todayPanel.classList.add('hidden'); 
-            }); 
-            
-            DOMElements.cancelAddTaskBtn.addEventListener('click', hideAddTaskModal); 
-            DOMElements.addTaskForm.addEventListener('submit', handleAddTask); 
-            DOMElements.searchInput.addEventListener('input', e => { 
-                currentSearchTerm = e.target.value; 
-                refreshDynamicContent(); 
-            }); 
-            DOMElements.categoryFilters.addEventListener('click', handleCategoryFilter); 
-            DOMElements.viewListBtn.addEventListener('click', () => switchView('list')); 
-            DOMElements.viewBoardBtn.addEventListener('click', () => switchView('board')); 
-            DOMElements.viewCalendarBtn.addEventListener('click', () => switchView('calendar')); 
-            DOMElements.cancelDeleteBtn.addEventListener('click', hideConfirmModal); 
-            DOMElements.confirmDeleteBtn.addEventListener('click', () => { 
-                if (taskToDeleteId) { 
-                    crudOperation('delete', { id: taskToDeleteId }); 
-                    hideConfirmModal(); 
-                } 
-            }); 
-            DOMElements.cancelEditBtn.addEventListener('click', hideEditModal); 
-            DOMElements.editTaskForm.addEventListener('submit', handleEditTask); 
-
-            // History Button Listeners
-            DOMElements.editHistoryBtn.addEventListener('click', () => showHistoryModal(taskToEditId));
-            DOMElements.historyModalCloseBtn.addEventListener('click', () => DOMElements.historyModal.classList.add('hidden'));
-
-            DOMElements.prevMonthBtn.addEventListener('click', () => { 
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); 
-                renderCalendarView(); 
-            }); 
-            DOMElements.nextMonthBtn.addEventListener('click', () => { 
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); 
-                renderCalendarView(); 
-            }); 
-            DOMElements.calendarGrid.addEventListener('mouseover', showCalendarTooltip); 
-            DOMElements.calendarGrid.addEventListener('mouseout', hideCalendarTooltip); 
-            DOMElements.calendarGrid.addEventListener('click', handleCalendarDayClick); 
-            
-            // Close the calendar task modal
-            DOMElements.calendarModalCloseBtn.addEventListener('click', () => DOMElements.calendarDayModal.classList.add('hidden'));
-
-            DOMElements.statsModalCloseBtn.addEventListener('click', () => DOMElements.statsModal.classList.add('hidden')); 
-            DOMElements.deleteAllDataBtn.addEventListener('click', handleDeleteAllData); 
-            DOMElements.kanbanBoard.addEventListener('dragstart', e => { 
-                if(e.target.classList.contains('kanban-card')) { 
-                    e.dataTransfer.setData('text/plain', e.target.dataset.id); 
-                    e.target.classList.add('dragging'); 
-                } 
-            }); 
-            DOMElements.kanbanBoard.addEventListener('dragend', e => { 
-                if(e.target.classList.contains('kanban-card')) e.target.classList.remove('dragging'); 
-            }); 
-            DOMElements.kanbanBoard.addEventListener('dragover', e => { 
-                e.preventDefault(); 
-                const column = e.target.closest('.kanban-column'); 
-                if(column) column.classList.add('drag-over'); 
-            }); 
-            DOMElements.kanbanBoard.addEventListener('dragleave', e => { 
-                const column = e.target.closest('.kanban-column'); 
-                if(column) column.classList.remove('drag-over'); 
-            }); 
-            DOMElements.kanbanBoard.addEventListener('drop', e => { 
-                e.preventDefault(); 
-                const column = e.target.closest('.kanban-column'); 
-                if(column) { 
-                    column.classList.remove('drag-over'); 
-                    const taskId = e.dataTransfer.getData('text/plain'); 
-                    const newCategory = column.dataset.category; 
-                    crudOperation('update', {id: taskId, category: newCategory}); 
-                } 
-            }); 
-            document.addEventListener('click', (e) => { 
-                // Close panels on outside click
-                if (!DOMElements.headerTodayBtn.contains(e.target) && !DOMElements.todayPanel.contains(e.target)) { 
-                    DOMElements.todayPanel.classList.add('hidden'); 
-                } 
-                if (!DOMElements.headerLogoutBtn.contains(e.target) && !DOMElements.logoutPanel.contains(e.target)) {
-                    DOMElements.logoutPanel.classList.add('hidden');
-                }
-            }); 
-        }
-
-        function attachDynamicListeners(container) { 
-            container.querySelectorAll('li.task-item, .calendar-task-item').forEach(taskItem => {
-                const taskId = taskItem.dataset.id;
-                
-                // Toggle Checkbox
-                taskItem.querySelector('.task-checkbox')?.addEventListener('change', e => {
-                    const isCompleted = e.target.checked; 
-                    const task = allTasks.find(t => t.id === taskId);
-                    
-                    if (isCompleted && task && task.subtasks && task.subtasks.length > 0 && !task.subtasks.every(s => s.completed)) {
-                         // Subtask check logic
-                        const alertDiv = taskItem.querySelector('.subtask-alert');
-                        if (alertDiv) {
-                            alertDiv.textContent = "Please complete all subtasks first!";
-                            alertDiv.classList.remove('hidden');
-                            taskItem.classList.add('flash-error');
-                            setTimeout(() => {
-                                alertDiv.classList.add('hidden');
-                                taskItem.classList.remove('flash-error');
-                            }, 3000);
-                        }
-                        e.target.checked = false; 
-                        return; 
-                    }
-                    
-                    const updatePayload = { id: taskId, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null }; 
-                    if (isCompleted) { handleRecurringTask(allTasks.find(t => t.id === taskId)); } 
-                    crudOperation('update', updatePayload);
+        genReceipt: (sale) => {
+            const isReturn = sale.netDifference < 0;
+            const isExchange = sale.refId !== null;
+            let itemsHtml = '';
+            if(!isExchange) {
+                itemsHtml = sale.items.map(i=>`<div class="receipt-row"><span>${i.qty} x ${i.name}</span><span>${Utils.fmt(i.price*i.qty)}</span></div>`).join('');
+            } else {
+                itemsHtml += `<div class="receipt-row bold" style="margin-top:5px; border-bottom:1px solid #ccc;">ACTIVITY LOG:</div>`;
+                sale.changes.forEach(c => {
+                    const isRet = c.qtyDiff < 0;
+                    itemsHtml += `<div class="receipt-row" style="color:${isRet?'red':'black'}">
+                        <span>${isRet?'-':'+'} ${Math.abs(c.qtyDiff)} ${c.name} @ ${Utils.fmt(c.price)}</span>
+                        <span>${isRet?'-':'+'}${Utils.fmt(Math.abs(c.totalDiff))}</span></div>`;
                 });
-
-                // Details Button (for List View and Calendar Modal)
-                taskItem.querySelector('.details-btn')?.addEventListener('click', e => {
-                    const details = taskItem.querySelector('.details-container'); 
-                    const icon = e.target.closest('.details-btn').querySelector('svg'); 
-                    details.classList.toggle('open'); 
-                    icon.classList.toggle('rotate-180');
-                });
-                
-                // Edit/Delete/History buttons 
-                taskItem.querySelector('.edit-btn')?.addEventListener('click', () => showEditModal(taskId));
-                taskItem.querySelector('.delete-btn')?.addEventListener('click', () => showConfirmModal(taskId));
-                taskItem.querySelector('.show-history-btn')?.addEventListener('click', () => showHistoryModal(taskId));
-
-                // Subtask/Notes logic (only present in List View's full details-container)
-                const notesTextarea = taskItem.querySelector('.task-notes-textarea');
-                if (notesTextarea) {
-                    notesTextarea.addEventListener('input', e => autoResizeTextarea(e.target));
-                    notesTextarea.addEventListener('blur', e => {
-                        crudOperation('update', { id: taskId, notes: e.target.value });
-                    }, true);
-                }
-                
-                // Add subtask logic
-                taskItem.querySelector('.add-subtask-btn')?.addEventListener('click', e => {
-                    const textInput = taskItem.querySelector('.new-subtask-input');
-                    const dateInput = taskItem.querySelector('.new-subtask-date-input');
-                    if (textInput.value.trim()) {
-                        handleAddSubtask(taskId, textInput.value.trim(), dateInput.value);
-                        textInput.value = '';
-                        dateInput.value = '';
-                    }
-                });
-            });
-        }
+            }
+            let label = sale.netDifference < 0 ? "REFUND ISSUED" : (sale.netDifference===0 ? "EVEN EXCHANGE" : "TOTAL CHARGED");
+            return `<div class="receipt-paper">
+                <div class="receipt-header"><div class="receipt-logo">GEMINI POS</div><div>Store #8842 • Traceable</div><div>${new Date(sale.date).toLocaleString()}</div><div>Trx: <b>${sale.id}</b></div>${sale.refId?`<div style="font-size:11px;">Ref: ${sale.refId}</div>`:''}</div>
+                <div class="dashed-line"></div>${itemsHtml}<div class="dashed-line"></div>
+                <div class="receipt-row"><span>New Subtotal</span><span>${Utils.fmt(sale.subtotal)}</span></div>
+                <div class="receipt-row"><span>Tax (${(CONFIG.TAX_RATE*100).toFixed(0)}%)</span><span>${Utils.fmt(sale.tax)}</span></div>
+                <div class="receipt-row bold" style="font-size:1.1em; margin-bottom:10px;"><span>NEW CART TOTAL</span><span>${Utils.fmt(sale.total)}</span></div>
+                ${isExchange ? `<div style="background:#f0f0f0; padding:5px; margin-bottom:5px;"><div class="receipt-row" style="color:#666;"><span>Previous Balance</span><span>-${Utils.fmt(sale.originalTotal)}</span></div><div class="receipt-row bold" style="border-top:1px solid #ccc;"><span>${label}</span><span>${Utils.fmt(Math.abs(sale.netDifference))}</span></div></div>` : `<div class="receipt-row bold"><span>TOTAL DUE</span><span>${Utils.fmt(sale.total)}</span></div>`}
+                <div class="receipt-row"><span>Payment (${sale.method})</span><span>${Utils.fmt(Math.abs(sale.netDifference))}</span></div>
+                <div class="receipt-footer" style="margin-top:15px;"><div class="barcode">*${sale.id}*</div></div></div>`;
+        },
         
-        setupEventListeners();
-        styleCategoryFilters();
-    </script>
+        // Updated Timeline to include Eye Icon
+        renderTimeline: (family) => {
+            const c = document.getElementById('timeline-area'); c.innerHTML = ""; c.style.display='block';
+            family.forEach((s, i) => {
+                const isRoot=i===0, isRef=s.netDifference<0, isMod=s.status==="Modified";
+                let icon="🛒", bg="#fff", bc="var(--border)";
+                if(isRef){icon="💸";bc="var(--danger)";} if(s.netDifference>0&&!isRoot){icon="💳";bc="var(--success)";}
+                
+                c.innerHTML += `<div class="timeline-node">
+                    <div class="timeline-left"><div class="timeline-icon" style="background:${bg}; border-color:${bc};">${icon}</div>${i!==family.length-1?'<div class="timeline-line"></div>':''}</div>
+                    <div class="timeline-content">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-weight:700; font-size:1.1rem;">${s.id}</span>
+                                <button onclick="Controller.previewTxn('${s.id}')" title="View Receipt" style="border:none; background:none; font-size:1.2rem; padding:0;">👁️</button>
+                            </div>
+                            <span class="badge-status" style="background:${isMod?'#fef3c7':'#e2e8f0'}; color:${isMod?'#b45309':'#475569'};">${s.status}</span>
+                        </div>
+                        <div style="background:var(--bg); padding:10px; border-radius:6px; font-size:0.9rem;">${isRoot?`Original Purchase of <b>${s.items.reduce((a,b)=>a+b.qty,0)} items</b>.`:`Activity: ${s.changes.map(x=>`<span style="color:${x.qtyDiff<0?'var(--danger)':'var(--success)'}">${x.qtyDiff>0?'+':''}${x.qtyDiff} ${x.name}</span>`).join(', ')}`}</div>
+                        <div style="display:flex; justify-content:space-between; margin-top:15px; font-weight:600;">
+                            <div>Cart: ${Utils.fmt(s.total)}</div>
+                            <div style="color:${isRef?'var(--danger)':'var(--success)'}">${isRef?'Refunded':'Paid'}: ${Utils.fmt(Math.abs(s.netDifference))}</div>
+                        </div>
+                        ${!isMod ? `<button style="width:100%; margin-top:10px; border:1px solid var(--primary); background:none; color:var(--primary); padding:8px; border-radius:6px;" onclick="Controller.previewTxn('${s.id}')">Modify / Return This</button>` : ''}
+                    </div>
+                </div>`;
+            });
+        },
+
+        renderPS: () => {
+            const g=document.getElementById('psGrid'); document.getElementById('ps-badge').style.display=State.psQueue.length?'block':'none';
+            g.innerHTML = State.psQueue.length ? "" : `<div style="grid-column:1/-1; text-align:center; color:#ccc;">Quarantine Empty</div>`;
+            State.psQueue.forEach((item, i) => {
+                g.innerHTML += `<div class="stat-card" style="border-left:4px solid var(--warning);"><h4>${item.name} (x${item.qty})</h4><div style="font-size:0.8rem; color:var(--text-muted);">From: ${item.origTxn}</div><div style="font-size:0.8rem; margin-bottom:10px;">Reason: ${item.reason}</div><div style="display:flex; gap:5px;"><button class="btn-lg" style="flex:1; padding:5px; background:var(--success); font-size:0.8rem;" onclick="Controller.resolvePs(${i}, true)">Restock</button><button class="btn-lg" style="flex:1; padding:5px; background:var(--danger); font-size:0.8rem;" onclick="Controller.resolvePs(${i}, false)">Discard</button></div></div>`;
+            });
+        },
+        renderHistory: (f="") => {
+            const l=document.getElementById('historyList'); l.innerHTML="";
+            State.sales.filter(s=>s.id.toLowerCase().includes(f.toLowerCase())).forEach(s=>{
+                l.innerHTML += `<div onclick="View.previewTxn('${s.id}')" style="padding:15px; border-bottom:1px solid var(--border); cursor:pointer; opacity:${s.status==='Modified'?0.5:1}"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>${s.refId?'↩️':'🛒'} ${s.id}</span><span>${Utils.fmt(s.total)}</span></div><div style="font-size:0.8rem; color:var(--text-muted);">${new Date(s.date).toLocaleDateString()}</div></div>`;
+            });
+        },
+        renderInv: () => document.getElementById('invTableBody').innerHTML=State.inventory.map(i=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:10px;">${i.name}</td><td>${Utils.fmt(i.price)}</td><td>${i.stock}</td><td><button onclick="Controller.delProd(${i.id})" style="color:red;border:none;background:none;">×</button></td></tr>`).join(''),
+        updateDash: () => {
+            const v = State.sales.filter(s=>s.status!=='Modified');
+            document.getElementById('d-rev').innerText = Utils.fmt(v.reduce((a,b)=>a+b.total,0));
+            document.getElementById('d-count').innerText = v.length;
+            document.getElementById('d-returns').innerText = State.psQueue.length;
+        }
+    };
+
+    const Controller = {
+        init: () => { Utils.load(); Controller.newTxn(); View.init(); },
+        switchView: (id) => { document.querySelectorAll('.view').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); if(event) event.currentTarget.classList.add('active'); },
+        newTxn: () => { State.cart=[]; State.currentTxn={id:Utils.genId('ORD'), editRefId:null, originalSnapshot:null, originalTotal:0}; document.getElementById('txn-id').innerText=State.currentTxn.id; document.getElementById('edit-mode-bar').style.display='none'; View.renderCart(); },
+        setFilter: (c,b) => { State.filter=c; document.querySelectorAll('.cat-pill').forEach(e=>e.classList.remove('active')); b.classList.add('active'); View.renderGrid(); },
+        addToCart: (id) => { const i=State.inventory.find(x=>x.id===id), c=State.cart.find(x=>x.id===id); if(c&&c.qty>=i.stock)return Utils.toast("No Stock","error"); if(c)c.qty++; else State.cart.push({...i,qty:1}); View.renderCart(); },
+        modQty: (id,d) => { const c=State.cart.find(x=>x.id===id), i=State.inventory.find(x=>x.id===id); if(d>0&&c.qty>=i.stock)return Utils.toast("Max Stock","error"); c.qty+=d; if(c.qty<=0)State.cart=State.cart.filter(x=>x.id!==id); View.renderCart(); },
+        clearCart: () => { State.cart=[]; View.renderCart(); },
+        openPayModal: () => { 
+            const t=document.getElementById('payBtn').innerText; 
+            document.getElementById('payModalTotal').innerText=t; 
+            document.getElementById('payModalTotal').style.color=t.includes("REFUND")?"var(--danger)":"var(--success)";
+            document.getElementById('pay-summary-txt').innerText=State.currentTxn.editRefId?"Returns sent to Quarantine.":"";
+            Utils.openModal('payModal');
+        },
+        finalizeTransaction: (method) => {
+            const curSub=State.cart.reduce((a,b)=>a+(b.price*b.qty),0), curTax=curSub*CONFIG.TAX_RATE, curTot=curSub+curTax;
+            let origTot=0, origItems=[];
+            if(State.currentTxn.editRefId) {
+                origItems=State.currentTxn.originalSnapshot||[];
+                origTot=origItems.reduce((a,b)=>a+(b.price*b.qty),0)*(1+CONFIG.TAX_RATE);
+            }
+            const netDiff = curTot - origTot;
+            let changes = [];
+            const allIds = new Set([...State.cart.map(i=>i.id), ...origItems.map(i=>i.id)]);
+            
+            allIds.forEach(id => {
+                const nQ=(State.cart.find(x=>x.id===id)||{}).qty||0, oQ=(origItems.find(x=>x.id===id)||{}).qty||0, diff=nQ-oQ;
+                const ref=State.inventory.find(x=>x.id===id)||origItems.find(x=>x.id===id);
+                if(diff!==0 && ref) {
+                    changes.push({name:ref.name, qtyDiff:diff, price:ref.price, totalDiff:diff*ref.price});
+                    if(diff>0) { const inv=State.inventory.find(x=>x.id===id); if(inv) inv.stock-=diff; }
+                    else { State.psQueue.push({id:Date.now(), itemId:id, name:ref.name, qty:Math.abs(diff), reason:document.getElementById('txn-comment').value||"Return", origTxn:State.currentTxn.editRefId||State.currentTxn.id}); }
+                }
+            });
+
+            if(State.currentTxn.editRefId) { const old=State.sales.find(s=>s.id===State.currentTxn.editRefId); if(old)old.status="Modified"; }
+            
+            const rec = { id:State.currentTxn.id, date:new Date().toISOString(), refId:State.currentTxn.editRefId, subtotal:curSub, tax:curTax, total:curTot, originalTotal:origTot, netDifference:netDiff, method:method, items:JSON.parse(JSON.stringify(State.cart)), changes:changes, status:"Completed" };
+            State.sales.unshift(rec); Utils.save();
+            document.getElementById('receipt-content').innerHTML=View.genReceipt(rec); Utils.closeModal('payModal'); Utils.openModal('receiptModal'); View.renderGrid(); View.renderPS();
+        },
+
+        lookupChain: () => {
+            const sid = document.getElementById('return-search').value.trim();
+            if(!sid) return Utils.toast("Enter ID","error");
+            let cur = State.sales.find(s=>s.id===sid);
+            if(!cur) return Utils.toast("Not Found","error");
+            while(cur.refId) { const p=State.sales.find(s=>s.id===cur.refId); if(p)cur=p; else break; }
+            let fam=[cur], add=true;
+            while(add){add=false; const k=fam.map(f=>f.id); const ch=State.sales.filter(s=>k.includes(s.refId)&&!k.includes(s.id)); if(ch.length){fam=[...fam,...ch];add=true;}}
+            fam.sort((a,b)=>new Date(a.date)-new Date(b.date));
+            View.renderTimeline(fam);
+        },
+        previewTxn: (id) => { const s=State.sales.find(x=>x.id===id); if(s) View.previewTxn(s); },
+        loadReturnToPOS: (id) => {
+            const s=State.sales.find(x=>x.id===id); if(!s)return;
+            State.cart=JSON.parse(JSON.stringify(s.items)); State.currentTxn.originalSnapshot=JSON.parse(JSON.stringify(s.items));
+            State.currentTxn.editRefId=s.id; State.currentTxn.originalTotal=s.total; State.currentTxn.id=Utils.genId("RET");
+            document.getElementById('txn-id').innerText=State.currentTxn.id; document.getElementById('edit-mode-bar').style.display='block'; document.getElementById('ref-id-display').innerText=s.id; document.getElementById('txn-comment').value="";
+            Controller.switchView('pos'); View.renderCart(); Utils.toast("Loaded for Return/Exchange");
+        },
+        cancelEditMode: () => Controller.newTxn(),
+        openAddProductModal: () => Utils.openModal('addProductModal'),
+        saveProduct: () => { 
+            const n=document.getElementById('n-name').value, p=parseFloat(document.getElementById('n-price').value), s=parseInt(document.getElementById('n-stock').value);
+            if(!n||isNaN(p)) return Utils.toast("Invalid","error");
+            State.inventory.push({id:Date.now(), name:n, cat:document.getElementById('n-cat').value||"Gen", price:p, stock:s||0, icon:'📦'});
+            Utils.save(); View.renderGrid(); Utils.closeModal('addProductModal');
+        },
+        delProd: (id) => { if(confirm("Delete?")){State.inventory=State.inventory.filter(x=>x.id!==id); Utils.save(); View.renderGrid(); View.renderInv();} },
+        resolvePs: (i,res) => {
+            const q=State.psQueue[i]; if(res){const inv=State.inventory.find(x=>x.id===q.itemId); if(inv)inv.stock+=q.qty;}
+            State.psQueue.splice(i,1); Utils.save(); View.renderPS(); View.renderGrid(); Utils.toast(res?"Restocked":"Discarded");
+        }
+    };
+
+    window.onload = Controller.init;
+</script>
 </body>
 </html>
